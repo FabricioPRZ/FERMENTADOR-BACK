@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+
+  # ── API FastAPI ─────────────────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: sensor_api
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mysql
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - sensor_network
+
+  # ── MySQL ───────────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: sensor_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - sensor_network
+
+  # ── Adminer ─────────────────────────────────────────────────────────────────
+  adminer:
+    image: adminer
+    container_name: sensor_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sensor_network
+
+volumes:
+  mysql_data:
+
+networks:
+  sensor_network:
+    driver: bridge

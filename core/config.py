@@ -1,0 +1,66 @@
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+
+
+class Settings(BaseSettings):
+    # ── App ──────────────────────────────────────
+    APP_NAME: str = "sensor_db_backend"
+    APP_ENV: str = "development"
+    DEBUG: bool = True
+
+    # ── JWT ──────────────────────────────────────
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # ── MySQL ─────────────────────────────────────
+    DB_HOST: str
+    DB_PORT: int
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_NAME: str
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return (
+            f"mysql+aiomysql://{self.DB_USER}:{self.DB_PASSWORD}"
+            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        )
+
+    # ── RabbitMQ ──────────────────────────────────
+    RABBITMQ_HOST: str
+    RABBITMQ_PORT: int
+    RABBITMQ_USER: str
+    RABBITMQ_PASSWORD: str
+
+    @property
+    def RABBITMQ_URL(self) -> str:
+        return (
+            f"amqp://{self.RABBITMQ_USER}:{self.RABBITMQ_PASSWORD}"
+            f"@{self.RABBITMQ_HOST}:{self.RABBITMQ_PORT}/"
+        )
+
+    # ── Sensores ──────────────────────────────────
+    SENSOR_TYPES: list[str] = [
+        "alcohol",
+        "density",
+        "conductivity",
+        "ph",
+        "temperature",
+        "turbidity",
+        "rpm",
+    ]
+    TEMPERATURE_ALERT_THRESHOLD: float = 40.0
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

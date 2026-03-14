@@ -1,0 +1,128 @@
+import enum
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Integer, Text, text, update, select
+from core.database import Base
+from modules.notifications.domain.entities.entities import Notification
+from modules.notifications.domain.repository import INotificationRepository
+
+
+# ── Enums ─────────────────────────────────────────────────────────────────────
+class NotificationTypeEnum(str, enum.Enum):
+    FERMENTATION_COMPLETE    = "fermentation_complete"
+    FERMENTATION_INTERRUPTED = "fermentation_interrupted"
+    HIGH_TEMPERATURE         = "high_temperature"
+    SENSOR_FAILURE           = "sensor_failure"
+    GENERAL                  = "general"
+
+
+class NotificationStatusEnum(str, enum.Enum):
+    UNREAD = "unread"
+    READ   = "read"
+
+
+# ── Modelo ORM ────────────────────────────────────────────────────────────────
+class NotificationModel(Base):
+    __tablename__  = "notifications"
+    __table_args__ = {"extend_existing": True}
+
+    id         = Column(BigInteger, primary_key=True, autoincrement=True)
+    user_id    = Column(Integer, ForeignKey("users.id"), nullable=False)
+    session_id = Column(Integer, ForeignKey("fermentation_sessions.id"), nullable=True)
+    type       = Column(
+        Enum(NotificationTypeEnum),
+        nullable=False,
+        default=NotificationTypeEnum.GENERAL,
+    )
+    message    = Column(Text, nullable=False)
+    status     = Column(
+        Enum(NotificationStatusEnum),
+        nullable=False,
+        default=NotificationStatusEnum.UNREAD,
+    )
+    created_at = Column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False,
+    )
+
+
+# ── Repositorio ───────────────────────────────────────────────────────────────
+class NotificationRepository(INotificationRepository):
+
+    def __init__(self, session_factory):
+        self._session_factory = session_factory
+
+    async def create(
+        self,
+        user_id:    int,
+        message:    str,
+        notif_type: str,
+        session_id: int | None = None,
+    ) -> Notification:
+        async with self._session_factory() as session:
+            model = NotificationModel(
+                user_id=user_id,
+                message=message,
+                type=notif_type,
+                session_id=session_id,
+                status="unread",
+            )
+            session.add(model)
+            await session.commit()
+            await session.refresh(model)
+            return self._to_entity(model)
+
+    async def get_by_user(
+        self,
+        user_id:     int,
+        only_unread: bool = False,
+    ) -> list[Notification]:
+        async with self._session_factory() as session:
+            query = (
+                select(NotificationModel)
+                .where(NotificationModel.user_id == user_id)
+                .order_by(NotificationModel.created_at.desc())
+            )
+            if only_unread:
+                query = query.where(NotificationModel.status == "unread")
+
+            result = await session.execute(query)
+            return [self._to_entity(m) for m in result.scalars().all()]
+
+    async def mark_as_read(self, notification_id: int) -> Notification | None:
+        async with self._session_factory() as session:
+            await session.execute(
+                update(NotificationModel)
+                .where(NotificationModel.id == notification_id)
+                .values(status="read")
+            )
+            await session.commit()
+
+            result = await session.execute(
+                select(NotificationModel)
+                .where(NotificationModel.id == notification_id)
+            )
+            model = result.scalar_one_or_none()
+            return self._to_entity(model) if model else None
+
+    async def mark_all_as_read(self, user_id: int) -> None:
+        async with self._session_factory() as session:
+            await session.execute(
+                update(NotificationModel)
+                .where(
+                    NotificationModel.user_id == user_id,
+                    NotificationModel.status == "unread",
+                )
+                .values(status="read")
+            )
+            await session.commit()
+
+    def _to_entity(self, model: NotificationModel) -> Notification:
+        return Notification(
+            id=model.id,
+            user_id=model.user_id,
+            message=model.message,
+            type=model.type,
+            status=model.status,
+            session_id=model.session_id,
+            created_at=model.created_at,
+        )

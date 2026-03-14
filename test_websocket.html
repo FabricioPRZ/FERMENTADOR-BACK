@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test WebSocket — Sensores</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 24px;
+    }
+
+    h1 {
+      color: #58a6ff;
+      margin-bottom: 24px;
+      font-size: 1.4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      color: #8b949e;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      width: 80px;
+    }
+
+    button {
+      background: #238636;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 6px 14px;
+    }
+
+    button:hover  { background: #2ea043; }
+    button.red    { background: #b62324; }
+    button.red:hover { background: #da3633; }
+
+    .status {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #6e7681;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .status.on  { background: #3fb950; }
+    .status.off { background: #b62324; }
+
+    .status-label { font-size: 0.85rem; }
+
+    .log {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      height: 420px;
+      overflow-y: auto;
+      font-size: 0.82rem;
+      line-height: 1.7;
+    }
+
+    .log-entry { border-bottom: 1px solid #21262d; padding: 4px 0; }
+    .log-entry:last-child { border-bottom: none; }
+
+    .tag {
+      display: inline-block;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      padding: 1px 7px;
+      margin-right: 6px;
+      font-weight: bold;
+    }
+
+    .tag-sensor  { background: #1f6feb; color: #fff; }
+    .tag-notif   { background: #9e6a03; color: #fff; }
+    .tag-deact   { background: #b62324; color: #fff; }
+    .tag-connect { background: #238636; color: #fff; }
+    .tag-error   { background: #6e2020; color: #f85149; }
+
+    .value { color: #79c0ff; font-weight: bold; }
+    .ts    { color: #6e7681; font-size: 0.75rem; float: right; }
+
+    .sensors-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .sensor-box {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .sensor-box .name  { font-size: 0.75rem; color: #8b949e; margin-bottom: 4px; }
+    .sensor-box .val   { font-size: 1.3rem; color: #79c0ff; font-weight: bold; }
+    .sensor-box .unit  { font-size: 0.7rem;  color: #6e7681; }
+
+    .clear-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      float: right;
+    }
+    .clear-btn:hover { background: #30363d; }
+  </style>
+</head>
+<body>
+
+<h1>🔬 Test WebSocket — Sensores en tiempo real</h1>
+
+<div class="grid">
+
+  <!-- WS Sensores -->
+  <div class="card">
+    <h2>WebSocket Sensores</h2>
+    <div class="controls">
+      <span>Circuit ID:</span>
+      <input type="number" id="circuit-id" value="2" min="1">
+      <button onclick="connectSensors()">Conectar</button>
+      <button class="red" onclick="disconnectSensors()">Desconectar</button>
+    </div>
+    <div style="margin-top:10px">
+      <span class="status" id="sensor-status"></span>
+      <span class="status-label" id="sensor-status-text">Desconectado</span>
+    </div>
+    <div class="sensors-grid" id="sensors-grid">
+      <!-- se llena dinámicamente -->
+    </div>
+  </div>
+
+  <!-- WS Notificaciones -->
+  <div class="card">
+    <h2>WebSocket Notificaciones</h2>
+    <div class="controls">
+      <span>User ID:</span>
+      <input type="number" id="user-id" value="1" min="1">
+      <button onclick="connectNotifications()">Conectar</button>
+      <button class="red" onclick="disconnectNotifications()">Desconectar</button>
+    </div>
+    <div style="margin-top:10px">
+      <span class="status" id="notif-status"></span>
+      <span class="status-label" id="notif-status-text">Desconectado</span>
+    </div>
+    <div id="notif-list" style="margin-top:12px; font-size:0.85rem; max-height:120px; overflow-y:auto;"></div>
+  </div>
+
+</div>
+
+<!-- Log -->
+<div class="card">
+  <h2>
+    Log de mensajes
+    <button class="clear-btn" onclick="clearLog()">Limpiar</button>
+  </h2>
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+  const API = "ws://localhost:8000"
+
+  const SENSOR_UNITS = {
+    temperature:  "°C",
+    ph:           "pH",
+    alcohol:      "% v/v",
+    density:      "g/mL",
+    conductivity: "mS/cm",
+    turbidity:    "NTU",
+  }
+
+  let wsSensors = null
+  let wsNotifs  = null
+  const sensorValues = {}
+
+  // ── Log ────────────────────────────────────────────────────────────────────
+  function log(tag, tagClass, message) {
+    const el  = document.getElementById("log")
+    const ts  = new Date().toLocaleTimeString()
+    const div = document.createElement("div")
+    div.className = "log-entry"
+    div.innerHTML = `
+      <span class="tag ${tagClass}">${tag}</span>
+      ${message}
+      <span class="ts">${ts}</span>
+    `
+    el.prepend(div)
+  }
+
+  function clearLog() {
+    document.getElementById("log").innerHTML = ""
+  }
+
+  // ── Sensor boxes ───────────────────────────────────────────────────────────
+  function updateSensorBox(sensorType, value) {
+    sensorValues[sensorType] = value
+    renderSensorGrid()
+  }
+
+  function renderSensorGrid() {
+    const grid = document.getElementById("sensors-grid")
+    grid.innerHTML = Object.entries(sensorValues).map(([type, val]) => `
+      <div class="sensor-box">
+        <div class="name">${type}</div>
+        <div class="val">${val}</div>
+        <div class="unit">${SENSOR_UNITS[type] || ""}</div>
+      </div>
+    `).join("")
+  }
+
+  // ── WebSocket Sensores ─────────────────────────────────────────────────────
+  function connectSensors() {
+    const circuitId = document.getElementById("circuit-id").value
+    if (wsSensors) wsSensors.close()
+
+    wsSensors = new WebSocket(`${API}/ws/sensors/${circuitId}`)
+
+    wsSensors.onopen = () => {
+      setStatus("sensor", true)
+      log("CONNECT", "tag-connect", `Conectado a /ws/sensors/${circuitId}`)
+    }
+
+    wsSensors.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+
+      if (data.type === "sensor_data") {
+        updateSensorBox(data.sensor_type, data.value)
+        log(
+          "SENSOR",
+          "tag-sensor",
+          `<span class="value">${data.sensor_type}</span> = 
+           <span class="value">${data.value}</span> 
+           ${SENSOR_UNITS[data.sensor_type] || ""}
+           | circuit=${data.circuit_id} session=${data.session_id || "─"}`
+        )
+      } else if (data.type === "sensor_deactivated") {
+        log(
+          "DEACT",
+          "tag-deact",
+          `Sensor <span class="value">${data.sensor_type}</span> desactivado 
+           | última lectura=${data.last_reading || "─"}`
+        )
+      } else {
+        log("MSG", "tag-sensor", JSON.stringify(data))
+      }
+    }
+
+    wsSensors.onerror = (e) => {
+      log("ERROR", "tag-error", "Error en WebSocket de sensores")
+    }
+
+    wsSensors.onclose = () => {
+      setStatus("sensor", false)
+      log("DISCONNECT", "tag-error", "Desconectado de /ws/sensors")
+    }
+  }
+
+  function disconnectSensors() {
+    if (wsSensors) {
+      wsSensors.close()
+      wsSensors = null
+    }
+  }
+
+  // ── WebSocket Notificaciones ───────────────────────────────────────────────
+  function connectNotifications() {
+    const userId = document.getElementById("user-id").value
+    if (wsNotifs) wsNotifs.close()
+
+    wsNotifs = new WebSocket(`${API}/ws/notifications/${userId}`)
+
+    wsNotifs.onopen = () => {
+      setStatus("notif", true)
+      log("CONNECT", "tag-connect", `Conectado a /ws/notifications/${userId}`)
+    }
+
+    wsNotifs.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      log(
+        "NOTIF",
+        "tag-notif",
+        `[${data.type}] ${data.message}`
+      )
+
+      // Mostrar en panel de notificaciones
+      const list = document.getElementById("notif-list")
+      const item = document.createElement("div")
+      item.style.cssText = "padding:4px 0; border-bottom:1px solid #21262d; color:#e3b341"
+      item.textContent   = `⚠️ ${data.message}`
+      list.prepend(item)
+    }
+
+    wsNotifs.onerror = () => {
+      log("ERROR", "tag-error", "Error en WebSocket de notificaciones")
+    }
+
+    wsNotifs.onclose = () => {
+      setStatus("notif", false)
+      log("DISCONNECT", "tag-error", "Desconectado de /ws/notifications")
+    }
+  }
+
+  function disconnectNotifications() {
+    if (wsNotifs) {
+      wsNotifs.close()
+      wsNotifs = null
+    }
+  }
+
+  // ── Status indicator ───────────────────────────────────────────────────────
+  function setStatus(type, connected) {
+    const dot  = document.getElementById(`${type}-status`)
+    const text = document.getElementById(`${type}-status-text`)
+    dot.className        = `status ${connected ? "on" : "off"}`
+    text.textContent     = connected ? "Conectado" : "Desconectado"
+  }
+</script>
+
+</body>
+</html>
