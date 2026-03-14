@@ -1,4 +1,4 @@
-# 🧪 Sensor DB Backend
+# 🧪 Fermentador Backend
 
 API REST para el monitoreo en tiempo real de procesos de fermentación con circuitos ESP32.
 
@@ -685,7 +685,7 @@ ESP32 ──MQTT──► RabbitMQ ──amq.topic──► Backend
 | Programar / iniciar / detener fermentación | ❌ | ✅ | ✅ |
 | Editar fórmulas | ❌ | ✅ | ✅ |
 | Ver todos los usuarios | ❌ | ✅ | ✅ |
-| Crear / editar / eliminar usuarios | ❌ | ❌ | ✅ |
+| Crear / editar / eliminar usuarios | ❌ | ✅ | ✅ |
 
 ---
 
