@@ -16,7 +16,7 @@ class Publisher:
         Routing key: commands.{circuit_id}.{command_type}
         El ESP32 se suscribe al topic MQTT: commands/{circuit_id}/#
         """
-        routing_key = f"commands.{command.circuit_id}.{command.command_type}"
+        routing_key = f"commands.{command.circuit_id}.{command.type}"
         payload     = command.model_dump()
 
         await self.publish_raw(
