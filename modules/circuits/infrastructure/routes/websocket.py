@@ -1,7 +1,6 @@
 import json
 import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from core.websocket.schemas import CommandMessage
 from core.rabbitmq.publisher import publisher
 
 logger = logging.getLogger(__name__)
@@ -14,8 +13,13 @@ async def circuit_commands_ws(
     circuit_id: int,
 ):
     """
-    Canal Front → Back → RabbitMQ para comandos al ESP32.
-    El back actúa solo como puente, no persiste los comandos.
+    Canal Front → Back → RabbitMQ → ESP32.
+    El front manda el estado deseado de los dispositivos:
+    {
+        "motor": "encendido",
+        "bomba": "apagado"
+    }
+    La API lo publica en RabbitMQ y el ESP32 lo recibe por MQTT.
     """
     await websocket.accept()
     logger.info(f"[WS:Commands] Cliente conectado → circuit_id={circuit_id}")
@@ -25,20 +29,22 @@ async def circuit_commands_ws(
             raw  = await websocket.receive_text()
             data = json.loads(raw)
 
-            # El front manda: { "command_type": "motor_on", "payload": {} }
-            # CommandMessage usa el campo "type" internamente
-            command = CommandMessage(
-                type=data.get("command_type"),
-                target=data.get("target", "device"),
-                circuit_id=circuit_id,
+            # Publicar el JSON tal cual en RabbitMQ
+            # Routing key: commands.{circuit_id}.state
+            # El ESP32 recibe por MQTT en: commands/{circuit_id}/state
+            await publisher.publish_raw(
+                exchange="amq.topic",
+                routing_key=f"commands.{circuit_id}.state",
+                payload=data,
             )
 
-            await publisher.publish_command(command)
-
-            # Respuesta al front y al ESP32:
-            # { "status": "ok", "command": "motor_on" }
+            # Confirmar al front
             await websocket.send_text(
-                json.dumps({"status": "ok", "command": command.type})
+                json.dumps({"status": "ok", "payload": data})
+            )
+
+            logger.debug(
+                f"[WS:Commands] Comando publicado → circuit_id={circuit_id} | {data}"
             )
 
     except WebSocketDisconnect:
