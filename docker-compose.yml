@@ -1,8 +1,5 @@
-version: "3.9"
-
 services:
 
-  # ── API FastAPI ─────────────────────────────────────────────────────────────
   api:
     build: .
     container_name: sensor_api
@@ -18,11 +15,10 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "sleep 15 && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     networks:
       - sensor_network
 
-  # ── MySQL ───────────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: sensor_mysql
@@ -36,15 +32,14 @@ services:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
     networks:
       - sensor_network
 
-  # ── Adminer ─────────────────────────────────────────────────────────────────
   adminer:
     image: adminer
     container_name: sensor_adminer
