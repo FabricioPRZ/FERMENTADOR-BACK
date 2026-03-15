@@ -109,6 +109,7 @@ class AuthRepository(IAuthRepository):
             email=model.email,
             password=model.password,
             role_id=model.role_id,
+            circuit_id=model.circuit_id,
             role=role,
             created_by=model.created_by,
         )
