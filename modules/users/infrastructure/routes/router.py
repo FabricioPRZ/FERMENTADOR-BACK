@@ -3,25 +3,45 @@ from modules.users.domain.dto.schemas import (
     CreateUserRequest,
     UpdateUserRequest,
     UserResponse,
+    ActivateCircuitRequest,
+    ActivateCircuitResponse,
 )
 from modules.users.infrastructure.controllers import user_controller
-from core.dependencies import require_admin, require_admin_or_profesor
+from core.dependencies import require_admin, require_admin_or_profesor, require_any_role
 
 router = APIRouter()
+
+
+@router.post(
+    "/me/activate",
+    response_model=ActivateCircuitResponse,
+    summary="Activar mi circuito con código de activación",
+)
+async def activate_my_circuit(
+    body: ActivateCircuitRequest,
+    current_user: dict = Depends(require_any_role),
+):
+    """
+    El admin ingresa su activation_code una sola vez.
+    - Se asigna el circuit_id a su cuenta de forma permanente.
+    - Se devuelve un nuevo access_token con el circuit_id incluido.
+    - A partir de aquí puede crear usuarios con ese mismo código
+      y estos ya nacen con circuit_id asignado.
+    """
+    return await user_controller.activate_my_circuit(
+        user_id=current_user["user_id"],
+        body=body,
+    )
 
 
 @router.get(
     "/",
     response_model=list[UserResponse],
-    summary="Listar mis usuarios (los que yo creé)",
+    summary="Ver usuarios que yo creé",
 )
 async def get_all_users(
     current_user: dict = Depends(require_admin_or_profesor),
 ):
-    """
-    Admin: ve todos los usuarios que él creó.
-    Profesor: ve todos los usuarios que él creó.
-    """
     return await user_controller.get_all(
         requester_id=current_user["user_id"],
         requester_role=current_user["role"],
@@ -53,7 +73,8 @@ async def create_user(
     """
     Admin puede crear: profesor o estudiante.
     Profesor puede crear: solo estudiante.
-    Ambos deben pasar el activation_code del circuito al que se asociará el usuario.
+    El activation_code determina el circuito al que se asocia el nuevo usuario.
+    El nuevo usuario ya nace con circuit_id asignado y no necesita ingresar el código.
     """
     return await user_controller.create(
         body=body,

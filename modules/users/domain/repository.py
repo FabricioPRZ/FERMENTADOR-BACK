@@ -32,3 +32,8 @@ class IUserRepository(ABC):
     @abstractmethod
     async def delete(self, user_id: int) -> None:
         ...
+
+    @abstractmethod
+    async def assign_circuit(self, user_id: int, circuit_id: int) -> None:
+        """Asigna un circuit_id al usuario."""
+        ...

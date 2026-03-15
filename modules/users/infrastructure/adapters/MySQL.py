@@ -1,14 +1,8 @@
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select, update, delete, ForeignKey, Integer, Column
+from sqlalchemy import select, update, delete
 from modules.auth.infrastructure.adapters.MySQL import UserModel, RoleModel
-from modules.circuits.infrastructure.adapters.MySQL import CircuitModel
 from modules.users.domain.repository import IUserRepository
 from modules.users.domain.entities.entities import User
-
-
-# Nota: UserModel ya tiene circuit_id definido en auth/MySQL.py.
-# Si no, agrégalo allí como:
-#   circuit_id = Column(Integer, ForeignKey("circuits.id"), nullable=True)
 
 
 class UserRepository(IUserRepository):
@@ -46,7 +40,6 @@ class UserRepository(IUserRepository):
             return self._to_entity(model) if model else None
 
     async def get_created_by(self, creator_id: int) -> list[User]:
-        """Retorna todos los usuarios cuyo created_by sea creator_id."""
         async with self._session_factory() as session:
             result = await session.execute(
                 select(UserModel)
@@ -97,6 +90,16 @@ class UserRepository(IUserRepository):
         async with self._session_factory() as session:
             await session.execute(
                 delete(UserModel).where(UserModel.id == user_id)
+            )
+            await session.commit()
+
+    async def assign_circuit(self, user_id: int, circuit_id: int) -> None:
+        """Asigna circuit_id al usuario. Se usa cuando el admin activa su circuito."""
+        async with self._session_factory() as session:
+            await session.execute(
+                update(UserModel)
+                .where(UserModel.id == user_id)
+                .values(circuit_id=circuit_id)
             )
             await session.commit()
 

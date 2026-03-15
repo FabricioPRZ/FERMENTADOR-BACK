@@ -19,6 +19,16 @@ class UpdateUserRequest(BaseModel):
     role:      str | None = None
 
 
+class ActivateCircuitRequest(BaseModel):
+    activation_code: str
+
+
+class ActivateCircuitResponse(BaseModel):
+    access_token: str
+    token_type:   str
+    circuit_id:   int
+
+
 class UserResponse(BaseModel):
     id:         int
     name:       str
