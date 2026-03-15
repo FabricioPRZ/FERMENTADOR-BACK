@@ -22,18 +22,23 @@ async def circuit_commands_ws(
 
     try:
         while True:
-            raw = await websocket.receive_text()
+            raw  = await websocket.receive_text()
             data = json.loads(raw)
 
+            # El front manda: { "command_type": "motor_on", "payload": {} }
+            # CommandMessage usa el campo "type" internamente
             command = CommandMessage(
+                type=data.get("command_type"),
+                target=data.get("target", "device"),
                 circuit_id=circuit_id,
-                command_type=data.get("command_type"),
-                payload=data.get("payload", {}),
             )
 
             await publisher.publish_command(command)
+
+            # Respuesta al front y al ESP32:
+            # { "status": "ok", "command": "motor_on" }
             await websocket.send_text(
-                json.dumps({"status": "ok", "command": command.command_type})
+                json.dumps({"status": "ok", "command": command.type})
             )
 
     except WebSocketDisconnect:
@@ -45,4 +50,7 @@ async def circuit_commands_ws(
         logger.error(
             f"[WS:Commands] Error → circuit_id={circuit_id} | {e}"
         )
-        await websocket.close()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
