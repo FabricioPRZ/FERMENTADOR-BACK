@@ -1,378 +1,973 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>Test — Fermentador</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Courier New', monospace; background: #0d1117; color: #c9d1d9; padding: 24px; }
-    h1 { color: #58a6ff; margin-bottom: 24px; font-size: 1.4rem; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
-    .card h2 { font-size: 0.85rem; color: #8b949e; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; }
-    .field { margin-bottom: 10px; }
-    .field label { display: block; font-size: 0.78rem; color: #8b949e; margin-bottom: 4px; }
-    input[type="text"], input[type="email"], input[type="password"], input[type="number"] {
-      background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9;
-      font-family: 'Courier New', monospace; font-size: 0.88rem; padding: 7px 12px; width: 100%;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    input:focus { border-color: #58a6ff; outline: none; }
-    button { background: #238636; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-family: 'Courier New', monospace; font-size: 0.85rem; padding: 8px 18px; transition: background 0.15s; width: 100%; margin-top: 4px; }
-    button:hover { background: #2ea043; }
-    button.red { background: #b62324; } button.red:hover { background: #da3633; }
-    button.blue { background: #1f6feb; } button.blue:hover { background: #388bfd; }
-    button:disabled { opacity: 0.35; cursor: not-allowed; }
-    button.half { width: calc(50% - 4px); }
-    .alert { border-radius: 6px; font-size: 0.8rem; margin-top: 10px; padding: 8px 12px; display: none; }
-    .alert.success { background: #0d2b1a; border: 1px solid #238636; color: #3fb950; display: block; }
-    .alert.error   { background: #2b0d0d; border: 1px solid #b62324; color: #f85149; display: block; }
-    .steps { display: flex; margin-bottom: 20px; }
-    .step { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.75rem; color: #6e7681; border-bottom: 2px solid #30363d; transition: all 0.2s; }
-    .step.active { color: #58a6ff; border-color: #58a6ff; }
-    .step.done   { color: #3fb950; border-color: #3fb950; }
-    .token-info { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; font-size: 0.75rem; margin-top: 10px; padding: 8px 12px; word-break: break-all; color: #6e7681; display: none; }
-    .token-info span { color: #79c0ff; }
-    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #6e7681; margin-right: 6px; vertical-align: middle; }
-    .dot.on  { background: #3fb950; box-shadow: 0 0 5px #3fb950; }
-    .dot.off { background: #b62324; }
-    .device-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #21262d; }
-    .device-row:last-child { border-bottom: none; }
-    .device-name { font-size: 0.9rem; font-weight: bold; }
-    .indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #b62324; margin-right: 8px; vertical-align: middle; transition: background 0.3s; }
-    .indicator.on { background: #3fb950; box-shadow: 0 0 6px #3fb950; }
-    .btn-row { display: flex; gap: 8px; }
-    .btn-row button { width: auto; }
-    .rpm-big { font-size: 3rem; font-weight: bold; color: #79c0ff; text-align: center; line-height: 1; padding: 12px 0 4px; }
-    .rpm-label { text-align: center; font-size: 0.78rem; color: #6e7681; margin-bottom: 12px; }
-    .rpm-bar-bg { background: #0d1117; border-radius: 4px; height: 8px; overflow: hidden; }
-    .rpm-bar { height: 100%; background: linear-gradient(90deg, #1f6feb, #79c0ff); border-radius: 4px; transition: width 0.5s; width: 0%; }
-    .rpm-meta { display: flex; justify-content: space-between; font-size: 0.7rem; color: #6e7681; margin-top: 4px; }
-    .log { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; height: 300px; overflow-y: auto; font-size: 0.8rem; line-height: 1.7; }
-    .log-entry { border-bottom: 1px solid #21262d; padding: 3px 0; }
-    .log-entry:last-child { border-bottom: none; }
-    .tag { display: inline-block; border-radius: 4px; font-size: 0.7rem; padding: 1px 6px; margin-right: 6px; font-weight: bold; }
-    .tag-ok     { background: #238636; color: #fff; }
-    .tag-err    { background: #6e2020; color: #f85149; }
-    .tag-sensor { background: #1f6feb; color: #fff; }
-    .tag-cmd    { background: #9e6a03; color: #fff; }
-    .tag-notif  { background: #6e2020; color: #e3b341; }
-    .tag-ws     { background: #30363d; color: #8b949e; }
-    .val { color: #79c0ff; font-weight: bold; }
-    .ts  { color: #6e7681; font-size: 0.7rem; float: right; }
-    .clear-btn { background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #8b949e; cursor: pointer; font-size: 0.75rem; padding: 3px 10px; float: right; width: auto; margin-top: 0; }
-    .clear-btn:hover { background: #30363d; }
-    .section-label { font-size: 0.72rem; color: #6e7681; margin: 10px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 24px;
+    }
+
+    h1 {
+      color: #58a6ff;
+      margin-bottom: 24px;
+      font-size: 1.4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      color: #8b949e;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"] {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      padding: 7px 12px;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: #58a6ff;
+      outline: none;
+    }
+
+    button {
+      background: #238636;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      padding: 8px 18px;
+      transition: background 0.15s;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    button:hover {
+      background: #2ea043;
+    }
+
+    button.red {
+      background: #b62324;
+    }
+
+    button.red:hover {
+      background: #da3633;
+    }
+
+    button.blue {
+      background: #1f6feb;
+    }
+
+    button.blue:hover {
+      background: #388bfd;
+    }
+
+    button.amber {
+      background: #9e6a03;
+    }
+
+    button.amber:hover {
+      background: #bb8009;
+    }
+
+    button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    button.half {
+      width: calc(50% - 4px);
+    }
+
+    .alert {
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-top: 10px;
+      padding: 8px 12px;
+      display: none;
+    }
+
+    .alert.success {
+      background: #0d2b1a;
+      border: 1px solid #238636;
+      color: #3fb950;
+      display: block;
+    }
+
+    .alert.error {
+      background: #2b0d0d;
+      border: 1px solid #b62324;
+      color: #f85149;
+      display: block;
+    }
+
+    .steps {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .step {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 0.75rem;
+      color: #6e7681;
+      border-bottom: 2px solid #30363d;
+      transition: all 0.2s;
+    }
+
+    .step.active {
+      color: #58a6ff;
+      border-color: #58a6ff;
+    }
+
+    .step.done {
+      color: #3fb950;
+      border-color: #3fb950;
+    }
+
+    .token-info {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      margin-top: 10px;
+      padding: 8px 12px;
+      word-break: break-all;
+      color: #6e7681;
+      display: none;
+    }
+
+    .token-info span {
+      color: #79c0ff;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #6e7681;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .dot.on {
+      background: #3fb950;
+      box-shadow: 0 0 5px #3fb950;
+    }
+
+    .dot.off {
+      background: #b62324;
+    }
+
+    .device-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .device-row:last-child {
+      border-bottom: none;
+    }
+
+    .device-name {
+      font-size: 0.88rem;
+      font-weight: bold;
+    }
+
+    .device-sublabel {
+      font-size: 0.68rem;
+      color: #6e7681;
+      margin-top: 1px;
+    }
+
+    .indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+      transition: background 0.3s, box-shadow 0.3s;
+      background: #b62324;
+    }
+
+    .indicator.on {
+      background: #3fb950;
+      box-shadow: 0 0 6px #3fb950;
+    }
+
+    .indicator.amber-off {
+      background: #4a3900;
+    }
+
+    .indicator.amber-on {
+      background: #e3b341;
+      box-shadow: 0 0 6px #e3b341;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-row button {
+      width: auto;
+      margin-top: 0;
+      font-size: 0.78rem;
+      padding: 6px 12px;
+    }
+
+    .val-big {
+      font-size: 2.4rem;
+      font-weight: bold;
+      text-align: center;
+      line-height: 1;
+      padding: 10px 0 2px;
+    }
+
+    .val-unit {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #6e7681;
+      margin-bottom: 6px;
+    }
+
+    .rpm-bar-bg {
+      background: #0d1117;
+      border-radius: 4px;
+      height: 7px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .rpm-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #1f6feb, #79c0ff);
+      border-radius: 4px;
+      transition: width 0.5s;
+      width: 0%;
+    }
+
+    .rpm-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: #6e7681;
+      margin-bottom: 8px;
+    }
+
+    .sensor-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px 14px;
+    }
+
+    .sensor-card .sc-label {
+      font-size: 0.72rem;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .sensor-card .sc-value {
+      font-size: 1.6rem;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+
+    .sensor-card .sc-unit {
+      font-size: 0.72rem;
+      color: #6e7681;
+    }
+
+    .sensor-card .sc-ts {
+      font-size: 0.68rem;
+      color: #6e7681;
+      margin-top: 4px;
+    }
+
+    .log {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      height: 260px;
+      overflow-y: auto;
+      font-size: 0.8rem;
+      line-height: 1.7;
+    }
+
+    .log-entry {
+      border-bottom: 1px solid #21262d;
+      padding: 3px 0;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      margin-right: 6px;
+      font-weight: bold;
+    }
+
+    .tag-ok {
+      background: #238636;
+      color: #fff;
+    }
+
+    .tag-err {
+      background: #6e2020;
+      color: #f85149;
+    }
+
+    .tag-sensor {
+      background: #1f6feb;
+      color: #fff;
+    }
+
+    .tag-cmd {
+      background: #9e6a03;
+      color: #fff;
+    }
+
+    .tag-notif {
+      background: #6e2020;
+      color: #e3b341;
+    }
+
+    .tag-ws {
+      background: #30363d;
+      color: #8b949e;
+    }
+
+    .val {
+      color: #79c0ff;
+      font-weight: bold;
+    }
+
+    .ts {
+      color: #6e7681;
+      font-size: 0.7rem;
+      float: right;
+    }
+
+    .clear-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      float: right;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .clear-btn:hover {
+      background: #30363d;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      color: #6e7681;
+      margin: 10px 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .group-label {
+      font-size: 0.7rem;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 12px 0 5px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #21262d;
+    }
   </style>
 </head>
+
 <body>
 
-<h1>🔬 Test Fermentador — Panel de control</h1>
+  <h1>🔬 Test Fermentador — Panel de control</h1>
 
-<div class="steps">
-  <div class="step active" id="step-1">1. Registro</div>
-  <div class="step"        id="step-2">2. Login</div>
-  <div class="step"        id="step-3">3. Activar circuito</div>
-  <div class="step"        id="step-4">4. Control en tiempo real</div>
-</div>
-
-<!-- Auth -->
-<div class="grid" id="section-auth">
-  <div class="card">
-    <h2>Registro de administrador</h2>
-    <div class="field"><label>Nombre</label><input type="text" id="reg-name" placeholder="Juan"></div>
-    <div class="field"><label>Apellido</label><input type="text" id="reg-lastname" placeholder="Pérez"></div>
-    <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="admin@email.com"></div>
-    <div class="field"><label>Contraseña</label><input type="password" id="reg-password" placeholder="••••••••"></div>
-    <button onclick="register()">Registrarse</button>
-    <div class="alert" id="reg-alert"></div>
+  <div class="steps">
+    <div class="step active" id="step-1">1. Registro</div>
+    <div class="step" id="step-2">2. Login</div>
+    <div class="step" id="step-3">3. Activar circuito</div>
+    <div class="step" id="step-4">4. Control en tiempo real</div>
   </div>
-  <div class="card">
-    <h2>Login</h2>
-    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="admin@email.com"></div>
-    <div class="field"><label>Contraseña</label><input type="password" id="login-password" placeholder="••••••••"></div>
-    <button onclick="login()" class="blue">Iniciar sesión</button>
-    <div class="alert" id="login-alert"></div>
-    <div class="token-info" id="token-info">
-      Token: <span id="token-preview">—</span><br>
-      circuit_id: <span id="token-circuit">—</span>
-    </div>
-  </div>
-</div>
 
-<!-- Activar circuito -->
-<div class="card" id="section-activate" style="margin-bottom:16px; opacity:0.4; pointer-events:none">
-  <h2>Activar circuito con código de activación</h2>
-  <p style="font-size:0.82rem; color:#8b949e; margin-bottom:12px">Ingresa el código de activación. Solo necesitas hacerlo una vez.</p>
-  <div style="display:flex; gap:10px; align-items:flex-end">
-    <div class="field" style="flex:1; margin:0">
-      <label>Código de activación</label>
-      <input type="text" id="activation-code" placeholder="A3F9B2C1" style="text-transform:uppercase; letter-spacing:2px">
-    </div>
-    <button onclick="activateCircuit()" class="blue" style="width:auto; padding:8px 24px; margin:0">Activar</button>
-  </div>
-  <div class="alert" id="activate-alert"></div>
-</div>
-
-<!-- Control en tiempo real -->
-<div id="section-realtime" style="opacity:0.4; pointer-events:none">
-  <div class="grid">
-
-    <!-- Comandos -->
+  <!-- Auth -->
+  <div class="grid" id="section-auth">
     <div class="card">
-      <h2>Control de dispositivos</h2>
-      <div class="section-label">WebSocket comandos</div>
-      <div style="display:flex; gap:8px; margin-bottom:12px">
-        <button onclick="connectCommands()" class="blue half">Conectar</button>
-        <button onclick="disconnectCommands()" class="red half">Desconectar</button>
-      </div>
-      <div style="margin-bottom:14px">
-        <span class="dot" id="cmd-dot"></span>
-        <span style="font-size:0.82rem" id="cmd-status-text">Desconectado</span>
-      </div>
-
-      <div class="device-row">
-        <div><span class="indicator" id="motor-ind"></span><span class="device-name">Motor</span></div>
-        <div class="btn-row">
-          <button onclick="sendEstado({ motor: 'encendido' })">Encender</button>
-          <button onclick="sendEstado({ motor: 'apagado' })" class="red">Apagar</button>
-        </div>
-      </div>
-
-      <div class="device-row">
-        <div><span class="indicator" id="bomba-ind"></span><span class="device-name">Bomba</span></div>
-        <div class="btn-row">
-          <button onclick="sendEstado({ bomba: 'encendido' })">Encender</button>
-          <button onclick="sendEstado({ bomba: 'apagado' })" class="red">Apagar</button>
-        </div>
-      </div>
-
-      <div class="device-row">
-        <div><span class="device-name" style="color:#e3b341">🧪 Fermentación</span></div>
-        <div class="btn-row">
-          <button onclick="sendEstado({ motor: 'encendido', bomba: 'encendido' })" class="blue">Iniciar</button>
-          <button onclick="sendEstado({ motor: 'apagado',   bomba: 'apagado'   })" class="red">Detener</button>
-        </div>
-      </div>
+      <h2>Registro de administrador</h2>
+      <div class="field"><label>Nombre</label><input type="text" id="reg-name" placeholder="Juan"></div>
+      <div class="field"><label>Apellido</label><input type="text" id="reg-lastname" placeholder="Pérez"></div>
+      <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="admin@email.com"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="reg-password" placeholder="••••••••"></div>
+      <button onclick="register()">Registrarse</button>
+      <div class="alert" id="reg-alert"></div>
     </div>
-
-    <!-- RPM -->
     <div class="card">
-      <h2>RPM del motor <span style="font-size:0.72rem;color:#6e7681">(en tiempo real desde ESP32)</span></h2>
-      <div class="section-label">WebSocket sensores</div>
-      <div style="display:flex; gap:8px; margin-bottom:12px">
-        <button onclick="connectSensors()" class="blue half">Conectar</button>
-        <button onclick="disconnectSensors()" class="red half">Desconectar</button>
+      <h2>Login</h2>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="admin@email.com"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="login-password" placeholder="••••••••">
       </div>
-      <div style="margin-bottom:10px">
-        <span class="dot" id="sensor-dot"></span>
-        <span style="font-size:0.82rem" id="sensor-status-text">Desconectado</span>
-      </div>
-      <div class="rpm-big" id="rpm-value">—</div>
-      <div class="rpm-label">Revoluciones por minuto</div>
-      <div class="rpm-bar-bg"><div class="rpm-bar" id="rpm-bar"></div></div>
-      <div class="rpm-meta"><span>0 RPM</span><span>300 RPM (máx)</span></div>
-      <div style="font-size:0.78rem; color:#8b949e; margin-top:12px">
-        Último dato: <span id="rpm-ts" style="color:#c9d1d9">—</span>
+      <button onclick="login()" class="blue">Iniciar sesión</button>
+      <div class="alert" id="login-alert"></div>
+      <div class="token-info" id="token-info">
+        Token: <span id="token-preview">—</span><br>
+        circuit_id: <span id="token-circuit">—</span>
       </div>
     </div>
-
   </div>
 
-  <!-- Notificaciones -->
-  <div class="card" style="margin-bottom:16px">
-    <h2>Notificaciones en tiempo real</h2>
-    <div style="display:flex; gap:8px; margin-bottom:10px">
-      <button onclick="connectNotifications()" class="blue" style="width:auto">Conectar</button>
-      <button onclick="disconnectNotifications()" class="red" style="width:auto">Desconectar</button>
-      <span class="dot" id="notif-dot" style="margin-left:8px; align-self:center"></span>
-      <span style="font-size:0.82rem; align-self:center" id="notif-status-text">Desconectado</span>
+  <!-- Activar circuito -->
+  <div class="card" id="section-activate" style="margin-bottom:16px; opacity:0.4; pointer-events:none">
+    <h2>Activar circuito con código de activación</h2>
+    <p style="font-size:0.82rem; color:#8b949e; margin-bottom:12px">Ingresa el código de activación. Solo necesitas
+      hacerlo una vez.</p>
+    <div style="display:flex; gap:10px; align-items:flex-end">
+      <div class="field" style="flex:1; margin:0">
+        <label>Código de activación</label>
+        <input type="text" id="activation-code" placeholder="A3F9B2C1"
+          style="text-transform:uppercase; letter-spacing:2px">
+      </div>
+      <button onclick="activateCircuit()" class="blue" style="width:auto; padding:8px 24px; margin:0">Activar</button>
     </div>
-    <div id="notif-list" style="font-size:0.82rem; max-height:100px; overflow-y:auto"></div>
+    <div class="alert" id="activate-alert"></div>
   </div>
 
-  <!-- Log -->
-  <div class="card">
-    <h2>Log <button class="clear-btn" onclick="clearLog()">Limpiar</button></h2>
-    <div class="log" id="log"></div>
+  <!-- Control en tiempo real -->
+  <div id="section-realtime" style="opacity:0.4; pointer-events:none">
+    <div class="grid">
+
+      <!-- ── Comandos ── -->
+      <div class="card">
+        <h2>Control de dispositivos</h2>
+
+        <div class="section-label">WebSocket comandos</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px">
+          <button onclick="connectCommands()" class="blue half">Conectar</button>
+          <button onclick="disconnectCommands()" class="red half">Desconectar</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <span class="dot" id="cmd-dot"></span>
+          <span style="font-size:0.82rem" id="cmd-status-text">Desconectado</span>
+        </div>
+
+        <div class="group-label">⚙️ Actuadores</div>
+
+        <div class="device-row">
+          <div>
+            <span class="indicator" id="motor-ind"></span>
+            <span class="device-name">Motor</span>
+            <div class="device-sublabel">motor</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({ motor: 'encendido' })">Encender</button>
+            <button onclick="sendEstado({ motor: 'apagado' })" class="red">Apagar</button>
+          </div>
+        </div>
+
+        <div class="device-row">
+          <div>
+            <span class="indicator" id="bomba-ind"></span>
+            <span class="device-name">Bomba</span>
+            <div class="device-sublabel">bomba</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({ bomba: 'encendido' })">Encender</button>
+            <button onclick="sendEstado({ bomba: 'apagado' })" class="red">Apagar</button>
+          </div>
+        </div>
+
+        <div class="group-label">🌡️ Sensores</div>
+
+        <div class="device-row">
+          <div>
+            <span class="indicator amber-off" id="s-temperature-ind"></span>
+            <span class="device-name">Temperatura</span>
+            <div class="device-sublabel">sensor_temperatura</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({ sensor_temperatura: 'encendido' })" class="amber">Activar</button>
+            <button onclick="sendEstado({ sensor_temperatura: 'apagado' })" class="red">Desactivar</button>
+          </div>
+        </div>
+
+        <div class="device-row">
+          <div>
+            <span class="indicator amber-off" id="s-ph-ind"></span>
+            <span class="device-name">pH</span>
+            <div class="device-sublabel">sensor_ph</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({ sensor_ph: 'encendido' })" class="amber">Activar</button>
+            <button onclick="sendEstado({ sensor_ph: 'apagado' })" class="red">Desactivar</button>
+          </div>
+        </div>
+
+        <div class="device-row">
+          <div>
+            <span class="indicator amber-off" id="s-alcohol-ind"></span>
+            <span class="device-name">Alcohol</span>
+            <div class="device-sublabel">sensor_alcohol</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({ sensor_alcohol: 'encendido' })" class="amber">Activar</button>
+            <button onclick="sendEstado({ sensor_alcohol: 'apagado' })" class="red">Desactivar</button>
+          </div>
+        </div>
+
+        <div class="device-row">
+          <div>
+            <span class="indicator amber-off" id="s-conductivity-ind"></span>
+            <span class="device-name">Conductividad</span>
+            <div class="device-sublabel">sensor_conductividad</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({ sensor_conductividad: 'encendido' })" class="amber">Activar</button>
+            <button onclick="sendEstado({ sensor_conductividad: 'apagado' })" class="red">Desactivar</button>
+          </div>
+        </div>
+
+        <div class="device-row">
+          <div>
+            <span class="indicator amber-off" id="s-turbidity-ind"></span>
+            <span class="device-name">Turbidez</span>
+            <div class="device-sublabel">sensor_turbidez</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({ sensor_turbidez: 'encendido' })" class="amber">Activar</button>
+            <button onclick="sendEstado({ sensor_turbidez: 'apagado' })" class="red">Desactivar</button>
+          </div>
+        </div>
+
+        <div class="group-label">🧪 Proceso completo</div>
+        <div class="device-row">
+          <div>
+            <span class="device-name" style="color:#e3b341">Fermentación</span>
+            <div class="device-sublabel">Todos los dispositivos</div>
+          </div>
+          <div class="btn-row">
+            <button onclick="sendEstado({
+            motor:'encendido', bomba:'encendido',
+            sensor_temperatura:'encendido', sensor_ph:'encendido',
+            sensor_alcohol:'encendido', sensor_conductividad:'encendido', sensor_turbidez:'encendido'
+          })" class="blue">Iniciar todo</button>
+            <button onclick="sendEstado({
+            motor:'apagado', bomba:'apagado',
+            sensor_temperatura:'apagado', sensor_ph:'apagado',
+            sensor_alcohol:'apagado', sensor_conductividad:'apagado', sensor_turbidez:'apagado'
+          })" class="red">Detener todo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Lecturas en tiempo real ── -->
+      <div class="card">
+        <h2>Lecturas en tiempo real <span style="font-size:0.72rem;color:#6e7681">(WS sensores)</span></h2>
+
+        <div class="section-label">WebSocket sensores</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px">
+          <button onclick="connectSensors()" class="blue half">Conectar</button>
+          <button onclick="disconnectSensors()" class="red half">Desconectar</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <span class="dot" id="sensor-dot"></span>
+          <span style="font-size:0.82rem" id="sensor-status-text">Desconectado</span>
+        </div>
+
+        <!-- RPM con barra -->
+        <div class="sensor-card" style="margin-bottom:10px">
+          <div class="sc-label">⚙️ RPM del motor</div>
+          <div class="val-big" id="rpm-value" style="color:#79c0ff">—</div>
+          <div class="val-unit">Revoluciones por minuto</div>
+          <div class="rpm-bar-bg">
+            <div class="rpm-bar" id="rpm-bar"></div>
+          </div>
+          <div class="rpm-meta"><span>0</span><span>300 RPM (máx)</span></div>
+          <div class="sc-ts">Último: <span id="rpm-ts">—</span></div>
+        </div>
+
+        <!-- Grid 2×3 para los 6 sensores -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+          <div class="sensor-card">
+            <div class="sc-label">🌡️ Temperatura</div>
+            <div class="sc-value" id="sv-temperature" style="color:#e3b341">—</div>
+            <div class="sc-unit">°C</div>
+            <div class="sc-ts" id="st-temperature">—</div>
+          </div>
+          <div class="sensor-card">
+            <div class="sc-label">🧪 pH</div>
+            <div class="sc-value" id="sv-ph" style="color:#3fb950">—</div>
+            <div class="sc-unit">pH</div>
+            <div class="sc-ts" id="st-ph">—</div>
+          </div>
+          <div class="sensor-card">
+            <div class="sc-label">🍺 Alcohol</div>
+            <div class="sc-value" id="sv-alcohol" style="color:#f0883e">—</div>
+            <div class="sc-unit">% vol</div>
+            <div class="sc-ts" id="st-alcohol">—</div>
+          </div>
+          <div class="sensor-card">
+            <div class="sc-label">⚡ Conductividad</div>
+            <div class="sc-value" id="sv-conductivity" style="color:#bc8cff">—</div>
+            <div class="sc-unit">µS/cm</div>
+            <div class="sc-ts" id="st-conductivity">—</div>
+          </div>
+          <div class="sensor-card">
+            <div class="sc-label">🌫️ Turbidez</div>
+            <div class="sc-value" id="sv-turbidity" style="color:#8b949e">—</div>
+            <div class="sc-unit">NTU</div>
+            <div class="sc-ts" id="st-turbidity">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="card" style="margin-bottom:16px">
+      <h2>Notificaciones en tiempo real</h2>
+      <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center">
+        <button onclick="connectNotifications()" class="blue" style="width:auto">Conectar</button>
+        <button onclick="disconnectNotifications()" class="red" style="width:auto">Desconectar</button>
+        <span class="dot" id="notif-dot" style="margin-left:8px"></span>
+        <span style="font-size:0.82rem" id="notif-status-text">Desconectado</span>
+      </div>
+      <div id="notif-list" style="font-size:0.82rem; max-height:100px; overflow-y:auto"></div>
+    </div>
+
+    <!-- Log -->
+    <div class="card">
+      <h2>Log <button class="clear-btn" onclick="clearLog()">Limpiar</button></h2>
+      <div class="log" id="log"></div>
+    </div>
   </div>
-</div>
 
-<script>
-  const API    = "http://52.200.18.187:8000"
-  const API_WS = "ws://52.200.18.187:8000"
-  const RPM_MAX = 300
+  <script>
+    const API = "http://52.200.18.187:8000"
+    const API_WS = "ws://52.200.18.187:8000"
+    const RPM_MAX = 300
 
-  let token = null, circuitId = null, userId = null
-  let wsSensors = null, wsCommands = null, wsNotifs = null
+    let token = null, circuitId = null, userId = null
+    let wsSensors = null, wsCommands = null, wsNotifs = null
 
-  // Estado actual de dispositivos — se manda completo en cada comando
-  const estado = { motor: "apagado", bomba: "apagado" }
-
-  function setStep(n) {
-    for (let i = 1; i <= 4; i++) {
-      document.getElementById(`step-${i}`).className =
-        "step" + (i < n ? " done" : i === n ? " active" : "")
+    // Estado completo — siempre se envía íntegro en cada comando
+    const estado = {
+      motor: "apagado",
+      bomba: "apagado",
+      sensor_temperatura: "apagado",
+      sensor_ph: "apagado",
+      sensor_alcohol: "apagado",
+      sensor_conductividad: "apagado",
+      sensor_turbidez: "apagado",
     }
-  }
 
-  function enableSection(id) {
-    const el = document.getElementById(id)
-    el.style.opacity = "1"; el.style.pointerEvents = "auto"
-  }
+    // Mapa: sensor_type del backend (SENSOR_MODEL_MAP, en inglés) → IDs del HTML
+    const SENSOR_UI = {
+      temperature: { value: "sv-temperature", ts: "st-temperature", ind: "s-temperature-ind" },
+      ph: { value: "sv-ph", ts: "st-ph", ind: "s-ph-ind" },
+      alcohol: { value: "sv-alcohol", ts: "st-alcohol", ind: "s-alcohol-ind" },
+      conductivity: { value: "sv-conductivity", ts: "st-conductivity", ind: "s-conductivity-ind" },
+      turbidity: { value: "sv-turbidity", ts: "st-turbidity", ind: "s-turbidity-ind" },
+    }
 
-  function log(tag, cls, msg) {
-    const el = document.getElementById("log"), ts = new Date().toLocaleTimeString()
-    const div = document.createElement("div")
-    div.className = "log-entry"
-    div.innerHTML = `<span class="tag ${cls}">${tag}</span>${msg}<span class="ts">${ts}</span>`
-    el.prepend(div)
-  }
-  function clearLog() { document.getElementById("log").innerHTML = "" }
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function setStep(n) {
+      for (let i = 1; i <= 4; i++)
+        document.getElementById(`step-${i}`).className =
+          "step" + (i < n ? " done" : i === n ? " active" : "")
+    }
 
-  function showAlert(id, msg, type) {
-    const el = document.getElementById(id)
-    el.textContent = msg; el.className = `alert ${type}`
-  }
+    function enableSection(id) {
+      const el = document.getElementById(id)
+      el.style.opacity = "1"; el.style.pointerEvents = "auto"
+    }
 
-  function decodeToken(t) {
-    try { return JSON.parse(atob(t.split(".")[1])) } catch { return {} }
-  }
+    function log(tag, cls, msg) {
+      const el = document.getElementById("log"), ts = new Date().toLocaleTimeString()
+      const div = document.createElement("div")
+      div.className = "log-entry"
+      div.innerHTML = `<span class="tag ${cls}">${tag}</span>${msg}<span class="ts">${ts}</span>`
+      el.prepend(div)
+    }
+    function clearLog() { document.getElementById("log").innerHTML = "" }
 
-  function applyToken(t) {
-    token = t
-    const p = decodeToken(t)
-    circuitId = p.circuit_id || null
-    userId    = parseInt(p.sub)
-    document.getElementById("token-info").style.display  = "block"
-    document.getElementById("token-preview").textContent = t.substring(0, 40) + "..."
-    document.getElementById("token-circuit").textContent = circuitId ?? "sin circuito"
-  }
+    function showAlert(id, msg, type) {
+      const el = document.getElementById(id)
+      el.textContent = msg; el.className = `alert ${type}`
+    }
 
-  function setDot(id, on) {
-    document.getElementById(`${id}-dot`).className           = `dot ${on ? "on" : "off"}`
-    document.getElementById(`${id}-status-text`).textContent = on ? "Conectado" : "Desconectado"
-  }
+    function decodeToken(t) {
+      try { return JSON.parse(atob(t.split(".")[1])) } catch { return {} }
+    }
 
-  function setIndicator(device, on) {
-    const el = document.getElementById(`${device}-ind`)
-    if (el) el.className = `indicator ${on ? "on" : ""}`
-  }
+    function applyToken(t) {
+      token = t
+      const p = decodeToken(t)
+      circuitId = p.circuit_id || null
+      userId = parseInt(p.sub)
+      document.getElementById("token-info").style.display = "block"
+      document.getElementById("token-preview").textContent = t.substring(0, 40) + "..."
+      document.getElementById("token-circuit").textContent = circuitId ?? "sin circuito"
+    }
 
-  function updateRPM(value, ts) {
-    const rpm = parseFloat(value)
-    document.getElementById("rpm-value").textContent = rpm > 0 ? rpm.toFixed(1) : "0"
-    document.getElementById("rpm-ts").textContent    = ts ? new Date(ts).toLocaleTimeString() : new Date().toLocaleTimeString()
-    document.getElementById("rpm-bar").style.width   = Math.min((rpm / RPM_MAX) * 100, 100) + "%"
-  }
+    function setDot(id, on) {
+      document.getElementById(`${id}-dot`).className = `dot ${on ? "on" : "off"}`
+      document.getElementById(`${id}-status-text`).textContent = on ? "Conectado" : "Desconectado"
+    }
 
-  async function register() {
-    const body = { name: document.getElementById("reg-name").value.trim(), last_name: document.getElementById("reg-lastname").value.trim(), email: document.getElementById("reg-email").value.trim(), password: document.getElementById("reg-password").value }
-    if (!body.name || !body.last_name || !body.email || !body.password) return showAlert("reg-alert", "Completa todos los campos", "error")
-    try {
-      const res = await fetch(`${API}/api/auth/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      const data = await res.json()
-      if (!res.ok) return showAlert("reg-alert", data.detail || "Error al registrar", "error")
-      showAlert("reg-alert", `Cuenta creada para ${data.name}. Ahora inicia sesión.`, "success")
-      log("OK", "tag-ok", `Registrado como ${data.email}`); setStep(2)
-    } catch { showAlert("reg-alert", "No se pudo conectar con el servidor", "error") }
-  }
-
-  async function login() {
-    const body = { email: document.getElementById("login-email").value.trim(), password: document.getElementById("login-password").value }
-    if (!body.email || !body.password) return showAlert("login-alert", "Completa email y contraseña", "error")
-    try {
-      const res = await fetch(`${API}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      const data = await res.json()
-      if (!res.ok) return showAlert("login-alert", data.detail || "Credenciales inválidas", "error")
-      applyToken(data.access_token)
-      log("OK", "tag-ok", `Login exitoso — circuit_id: ${circuitId ?? "sin asignar"}`)
-      if (circuitId) { setStep(4); enableSection("section-realtime"); showAlert("login-alert", `Sesión iniciada. Circuit ID: ${circuitId}`, "success") }
-      else           { setStep(3); enableSection("section-activate");  showAlert("login-alert", `Sesión iniciada. Hola, ${data.user.name}!`, "success") }
-    } catch { showAlert("login-alert", "No se pudo conectar con el servidor", "error") }
-  }
-
-  async function activateCircuit() {
-    const code = document.getElementById("activation-code").value.trim().toUpperCase()
-    if (!code) return showAlert("activate-alert", "Ingresa el código de activación", "error")
-    if (!token) return showAlert("activate-alert", "Primero inicia sesión", "error")
-    try {
-      const res = await fetch(`${API}/api/users/me/activate`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify({ activation_code: code }) })
-      const data = await res.json()
-      if (!res.ok) return showAlert("activate-alert", data.detail || "Código inválido", "error")
-      applyToken(data.access_token); circuitId = data.circuit_id
-      showAlert("activate-alert", `Circuito ${circuitId} activado.`, "success")
-      log("OK", "tag-ok", `Circuito activado — circuit_id: ${circuitId}`)
-      setStep(4); enableSection("section-realtime")
-    } catch { showAlert("activate-alert", "No se pudo conectar con el servidor", "error") }
-  }
-
-  function connectSensors() {
-    if (!circuitId) return log("ERROR", "tag-err", "No hay circuit_id.")
-    if (wsSensors) wsSensors.close()
-    wsSensors = new WebSocket(`${API_WS}/ws/sensors/${circuitId}`)
-    wsSensors.onopen = () => { setDot("sensor", true); log("WS", "tag-ws", `Conectado a /ws/sensors/${circuitId}`) }
-    wsSensors.onmessage = (e) => {
-      const data = JSON.parse(e.data)
-      if (data.type === "sensor_data") {
-        if (data.sensor_type === "rpm") { updateRPM(data.value, data.timestamp); setIndicator("motor", data.value > 0) }
-        log("SENSOR", "tag-sensor", `<span class="val">${data.sensor_type}</span> = <span class="val">${parseFloat(data.value).toFixed(2)}</span> | session=${data.session_id ?? "─"}`)
-      } else if (data.type === "sensor_deactivated") {
-        if (data.sensor_type === "rpm") { updateRPM(0, null); setIndicator("motor", false) }
-        log("DEACT", "tag-err", `Sensor <span class="val">${data.sensor_type}</span> desactivado`)
+    // Verde para actuadores (motor-ind, bomba-ind), ámbar para sensores (s-*-ind)
+    function setIndicator(elemId, on) {
+      const el = document.getElementById(elemId)
+      if (!el) return
+      if (elemId.startsWith("s-")) {
+        el.className = `indicator ${on ? "amber-on" : "amber-off"}`
+      } else {
+        el.className = `indicator${on ? " on" : ""}`
       }
     }
-    wsSensors.onerror = () => log("ERROR", "tag-err", "Error en WS sensores")
-    wsSensors.onclose = () => { setDot("sensor", false); log("WS", "tag-ws", "Desconectado de /ws/sensors") }
-  }
-  function disconnectSensors() { if (wsSensors) { wsSensors.close(); wsSensors = null } }
 
-  function connectNotifications() {
-    if (!userId) return log("ERROR", "tag-err", "Inicia sesión primero.")
-    if (wsNotifs) wsNotifs.close()
-    wsNotifs = new WebSocket(`${API_WS}/ws/notifications/${userId}`)
-    wsNotifs.onopen = () => { setDot("notif", true); log("WS", "tag-ws", `Conectado a /ws/notifications/${userId}`) }
-    wsNotifs.onmessage = (e) => {
-      const data = JSON.parse(e.data)
-      log("NOTIF", "tag-notif", `[${data.type}] ${data.message}`)
-      const list = document.getElementById("notif-list"), item = document.createElement("div")
-      item.style.cssText = "padding:4px 0; border-bottom:1px solid #21262d; color:#e3b341; font-size:0.82rem"
-      item.textContent = `⚠️ ${data.message}`; list.prepend(item)
+    function fmtTime(ts) {
+      return ts ? new Date(ts).toLocaleTimeString() : new Date().toLocaleTimeString()
     }
-    wsNotifs.onerror = () => log("ERROR", "tag-err", "Error en WS notificaciones")
-    wsNotifs.onclose = () => { setDot("notif", false); log("WS", "tag-ws", "Desconectado de /ws/notifications") }
-  }
-  function disconnectNotifications() { if (wsNotifs) { wsNotifs.close(); wsNotifs = null } }
 
-  function connectCommands() {
-    if (!circuitId) return log("ERROR", "tag-err", "No hay circuit_id.")
-    if (wsCommands) wsCommands.close()
-    wsCommands = new WebSocket(`${API_WS}/ws/circuit/${circuitId}/commands`)
-    wsCommands.onopen = () => { setDot("cmd", true); log("WS", "tag-ws", `Conectado a /ws/circuit/${circuitId}/commands`) }
-    wsCommands.onmessage = (e) => {
-      const data = JSON.parse(e.data)
-      if (data.status === "ok" && data.payload) {
-        if (data.payload.motor !== undefined) setIndicator("motor", data.payload.motor === "encendido")
-        if (data.payload.bomba !== undefined) setIndicator("bomba", data.payload.bomba === "encendido")
-        const resumen = Object.entries(data.payload).map(([k,v]) => `${k}: <span class="val">${v}</span>`).join(" | ")
-        log("CMD", "tag-cmd", `Confirmado → ${resumen}`)
+    function updateRPM(value, ts) {
+      const rpm = parseFloat(value)
+      document.getElementById("rpm-value").textContent = rpm > 0 ? rpm.toFixed(1) : "0"
+      document.getElementById("rpm-ts").textContent = fmtTime(ts)
+      document.getElementById("rpm-bar").style.width = Math.min((rpm / RPM_MAX) * 100, 100) + "%"
+    }
+
+    // Actualiza la mini-card de cualquier sensor genérico
+    function updateSensor(sensor_type, value, ts) {
+      const ui = SENSOR_UI[sensor_type]
+      if (!ui) return
+      document.getElementById(ui.value).textContent = parseFloat(value).toFixed(2)
+      document.getElementById(ui.ts).textContent = fmtTime(ts)
+      setIndicator(ui.ind, true)
+    }
+
+    function clearSensor(sensor_type) {
+      const ui = SENSOR_UI[sensor_type]
+      if (!ui) return
+      document.getElementById(ui.value).textContent = "—"
+      document.getElementById(ui.ts).textContent = "—"
+      setIndicator(ui.ind, false)
+    }
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    async function register() {
+      const body = {
+        name: document.getElementById("reg-name").value.trim(),
+        last_name: document.getElementById("reg-lastname").value.trim(),
+        email: document.getElementById("reg-email").value.trim(),
+        password: document.getElementById("reg-password").value,
       }
+      if (!body.name || !body.last_name || !body.email || !body.password)
+        return showAlert("reg-alert", "Completa todos los campos", "error")
+      try {
+        const res = await fetch(`${API}/api/auth/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        const data = await res.json()
+        if (!res.ok) return showAlert("reg-alert", data.detail || "Error al registrar", "error")
+        showAlert("reg-alert", `Cuenta creada para ${data.name}. Ahora inicia sesión.`, "success")
+        log("OK", "tag-ok", `Registrado como ${data.email}`); setStep(2)
+      } catch { showAlert("reg-alert", "No se pudo conectar con el servidor", "error") }
     }
-    wsCommands.onerror = () => log("ERROR", "tag-err", "Error en WS comandos")
-    wsCommands.onclose = () => { setDot("cmd", false); log("WS", "tag-ws", "Desconectado de /ws/commands") }
-  }
-  function disconnectCommands() { if (wsCommands) { wsCommands.close(); wsCommands = null } }
 
-  // Manda el estado completo al servidor con los cambios aplicados
-  function sendEstado(cambios) {
-    if (!wsCommands || wsCommands.readyState !== WebSocket.OPEN)
-      return log("ERROR", "tag-err", "Conecta el WS de comandos primero.")
+    async function login() {
+      const body = { email: document.getElementById("login-email").value.trim(), password: document.getElementById("login-password").value }
+      if (!body.email || !body.password) return showAlert("login-alert", "Completa email y contraseña", "error")
+      try {
+        const res = await fetch(`${API}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        const data = await res.json()
+        if (!res.ok) return showAlert("login-alert", data.detail || "Credenciales inválidas", "error")
+        applyToken(data.access_token)
+        log("OK", "tag-ok", `Login exitoso — circuit_id: ${circuitId ?? "sin asignar"}`)
+        if (circuitId) { setStep(4); enableSection("section-realtime"); showAlert("login-alert", `Sesión iniciada. Circuit ID: ${circuitId}`, "success") }
+        else { setStep(3); enableSection("section-activate"); showAlert("login-alert", `Sesión iniciada. Hola, ${data.user.name}!`, "success") }
+      } catch { showAlert("login-alert", "No se pudo conectar con el servidor", "error") }
+    }
 
-    Object.assign(estado, cambios)
-    wsCommands.send(JSON.stringify(estado))
+    async function activateCircuit() {
+      const code = document.getElementById("activation-code").value.trim().toUpperCase()
+      if (!code) return showAlert("activate-alert", "Ingresa el código de activación", "error")
+      if (!token) return showAlert("activate-alert", "Primero inicia sesión", "error")
+      try {
+        const res = await fetch(`${API}/api/users/me/activate`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify({ activation_code: code }) })
+        const data = await res.json()
+        if (!res.ok) return showAlert("activate-alert", data.detail || "Código inválido", "error")
+        applyToken(data.access_token); circuitId = data.circuit_id
+        showAlert("activate-alert", `Circuito ${circuitId} activado.`, "success")
+        log("OK", "tag-ok", `Circuito activado — circuit_id: ${circuitId}`)
+        setStep(4); enableSection("section-realtime")
+      } catch { showAlert("activate-alert", "No se pudo conectar con el servidor", "error") }
+    }
 
-    const resumen = Object.entries(cambios).map(([k,v]) => `${k}: <span class="val">${v}</span>`).join(" | ")
-    log("CMD →", "tag-cmd", `Enviado → ${resumen}`)
-  }
-</script>
+    // ── WebSocket sensores ────────────────────────────────────────────────────
+    function connectSensors() {
+      if (!circuitId) return log("ERROR", "tag-err", "No hay circuit_id.")
+      if (wsSensors) wsSensors.close()
+      wsSensors = new WebSocket(`${API_WS}/ws/sensors/${circuitId}`)
+      wsSensors.onopen = () => { setDot("sensor", true); log("WS", "tag-ws", `Conectado a /ws/sensors/${circuitId}`) }
+      wsSensors.onmessage = (e) => {
+        const data = JSON.parse(e.data)
+
+        // ── Formato raw del RPM: {"value":X,"session_id":Y,"active":Z} ──
+        if (data.type === undefined && data.value !== undefined) {
+          updateRPM(data.active ? data.value : 0, null)
+          setIndicator("motor-ind", data.active && data.value > 0)
+          log("SENSOR", "tag-sensor",
+            `<span class="val">rpm</span> = <span class="val">${parseFloat(data.value).toFixed(1)}</span>`
+            + ` | session=${data.session_id ?? "─"}`)
+          return
+        }
+
+        if (data.type === "sensor_data") {
+          if (data.sensor_type === "rpm") {
+            updateRPM(data.value, data.timestamp)
+            setIndicator("motor-ind", data.value > 0)
+          } else {
+            // temperature | ph | alcohol | conductivity | turbidity
+            updateSensor(data.sensor_type, data.value, data.timestamp)
+          }
+          log("SENSOR", "tag-sensor",
+            `<span class="val">${data.sensor_type}</span> = <span class="val">${parseFloat(data.value).toFixed(3)}</span>`
+            + ` | session=${data.session_id ?? "─"}`)
+
+        } else if (data.type === "sensor_deactivated") {
+          if (data.sensor_type === "rpm") {
+            updateRPM(0, null); setIndicator("motor-ind", false)
+          } else {
+            clearSensor(data.sensor_type)
+          }
+          log("DEACT", "tag-err", `Sensor <span class="val">${data.sensor_type}</span> desactivado`)
+        }
+      }
+      wsSensors.onerror = () => log("ERROR", "tag-err", "Error en WS sensores")
+      wsSensors.onclose = () => { setDot("sensor", false); log("WS", "tag-ws", "Desconectado de /ws/sensors") }
+    }
+    function disconnectSensors() { if (wsSensors) { wsSensors.close(); wsSensors = null } }
+
+    // ── WebSocket notificaciones ──────────────────────────────────────────────
+    function connectNotifications() {
+      if (!userId) return log("ERROR", "tag-err", "Inicia sesión primero.")
+      if (wsNotifs) wsNotifs.close()
+      wsNotifs = new WebSocket(`${API_WS}/ws/notifications/${userId}`)
+      wsNotifs.onopen = () => { setDot("notif", true); log("WS", "tag-ws", `Conectado a /ws/notifications/${userId}`) }
+      wsNotifs.onmessage = (e) => {
+        const data = JSON.parse(e.data)
+        log("NOTIF", "tag-notif", `[${data.type}] ${data.message}`)
+        const list = document.getElementById("notif-list"), item = document.createElement("div")
+        item.style.cssText = "padding:4px 0; border-bottom:1px solid #21262d; color:#e3b341; font-size:0.82rem"
+        item.textContent = `⚠️ ${data.message}`; list.prepend(item)
+      }
+      wsNotifs.onerror = () => log("ERROR", "tag-err", "Error en WS notificaciones")
+      wsNotifs.onclose = () => { setDot("notif", false); log("WS", "tag-ws", "Desconectado de /ws/notifications") }
+    }
+    function disconnectNotifications() { if (wsNotifs) { wsNotifs.close(); wsNotifs = null } }
+
+    // ── WebSocket comandos ────────────────────────────────────────────────────
+    function connectCommands() {
+      if (!circuitId) return log("ERROR", "tag-err", "No hay circuit_id.")
+      if (wsCommands) wsCommands.close()
+      wsCommands = new WebSocket(`${API_WS}/ws/circuit/${circuitId}/commands`)
+      wsCommands.onopen = () => { setDot("cmd", true); log("WS", "tag-ws", `Conectado a /ws/circuit/${circuitId}/commands`) }
+      wsCommands.onmessage = (e) => {
+        const data = JSON.parse(e.data)
+        if (data.status === "ok" && data.payload) {
+          const p = data.payload
+          if (p.motor !== undefined) setIndicator("motor-ind", p.motor === "encendido")
+          if (p.bomba !== undefined) setIndicator("bomba-ind", p.bomba === "encendido")
+          if (p.sensor_temperatura !== undefined) setIndicator("s-temperature-ind", p.sensor_temperatura === "encendido")
+          if (p.sensor_ph !== undefined) setIndicator("s-ph-ind", p.sensor_ph === "encendido")
+          if (p.sensor_alcohol !== undefined) setIndicator("s-alcohol-ind", p.sensor_alcohol === "encendido")
+          if (p.sensor_conductividad !== undefined) setIndicator("s-conductivity-ind", p.sensor_conductividad === "encendido")
+          if (p.sensor_turbidez !== undefined) setIndicator("s-turbidity-ind", p.sensor_turbidez === "encendido")
+          const resumen = Object.entries(p).map(([k, v]) => `${k}: <span class="val">${v}</span>`).join(" | ")
+          log("CMD", "tag-cmd", `Confirmado → ${resumen}`)
+        }
+      }
+      wsCommands.onerror = () => log("ERROR", "tag-err", "Error en WS comandos")
+      wsCommands.onclose = () => { setDot("cmd", false); log("WS", "tag-ws", "Desconectado de /ws/commands") }
+    }
+    function disconnectCommands() { if (wsCommands) { wsCommands.close(); wsCommands = null } }
+
+    // Aplica cambios al estado global y envía el estado completo
+    function sendEstado(cambios) {
+      if (!wsCommands || wsCommands.readyState !== WebSocket.OPEN)
+        return log("ERROR", "tag-err", "Conecta el WS de comandos primero.")
+      Object.assign(estado, cambios)
+      wsCommands.send(JSON.stringify(estado))
+      const resumen = Object.entries(cambios).map(([k, v]) => `${k}: <span class="val">${v}</span>`).join(" | ")
+      log("CMD →", "tag-cmd", `Enviado → ${resumen}`)
+    }
+  </script>
 </body>
+
 </html>
