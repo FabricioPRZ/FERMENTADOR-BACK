@@ -30,11 +30,12 @@ class LoginUseCase:
             "refresh_token": create_refresh_token({"sub": str(user.id)}),
             "token_type":    "bearer",
             "user": {
-                "id":         user.id,
-                "name":       user.name,
-                "last_name":  user.last_name,
-                "email":      user.email,
-                "role":       role_name,
-                "circuit_id": user.circuit_id,
+                "id":            user.id,
+                "name":          user.name,
+                "last_name":     user.last_name,
+                "email":         user.email,
+                "role":          role_name,
+                "circuit_id":    user.circuit_id,
+                "profile_image": user.profile_image,
             },
         }

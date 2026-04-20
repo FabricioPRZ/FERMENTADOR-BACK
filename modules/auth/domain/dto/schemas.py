@@ -18,11 +18,12 @@ class RefreshTokenRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id:        int
-    name:      str
-    last_name: str
-    email:     str
-    role:      str
+    id:            int
+    name:          str
+    last_name:     str
+    email:         str
+    role:          str
+    profile_image: str | None = None
 
 
 class TokenResponse(BaseModel):
