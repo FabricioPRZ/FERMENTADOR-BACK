@@ -16,6 +16,7 @@ class User:
     email:      str
     password:   str
     role_id:    int
-    circuit_id: int | None = None
-    role:       Role | None = None
-    created_by: int | None = None
+    circuit_id:    int | None = None
+    role:          Role | None = None
+    created_by:    int | None = None
+    profile_image: str | None = None

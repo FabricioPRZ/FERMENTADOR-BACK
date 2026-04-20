@@ -32,6 +32,7 @@ def _to_response(user) -> UserResponse:
         circuit_id=user.circuit_id,
         created_by=user.created_by,
         created_at=user.created_at,
+        profile_image=user.profile_image,
     )
 
 
@@ -84,6 +85,7 @@ async def update(user_id: int, body: UpdateUserRequest) -> UserResponse:
         email=body.email,
         password=body.password,
         role=body.role,
+        profile_image=body.profile_image,
     )
     return _to_response(user)
 

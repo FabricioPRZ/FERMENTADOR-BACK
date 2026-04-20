@@ -13,12 +13,13 @@ class UpdateUserUseCase:
 
     async def execute(
         self,
-        user_id:   int,
-        name:      str | None = None,
-        last_name: str | None = None,
-        email:     str | None = None,
-        password:  str | None = None,
-        role:      str | None = None,
+        user_id:       int,
+        name:          str | None = None,
+        last_name:     str | None = None,
+        email:         str | None = None,
+        password:      str | None = None,
+        role:          str | None = None,
+        profile_image: str | None = None,
     ) -> User:
         user = await self._repo.get_by_id(user_id)
         if not user:
@@ -29,10 +30,12 @@ class UpdateUserUseCase:
             if existing:
                 raise UserAlreadyExistsException()
 
-        user.name      = name      or user.name
-        user.last_name = last_name or user.last_name
-        user.email     = email     or user.email
-        user.password  = hash_password(password) if password else user.password
-        user.role_id   = ROLE_IDS.get(role, user.role_id) if role else user.role_id
+        user.name          = name          or user.name
+        user.last_name     = last_name     or user.last_name
+        user.email         = email         or user.email
+        user.password      = hash_password(password) if password else user.password
+        user.role_id       = ROLE_IDS.get(role, user.role_id) if role else user.role_id
+        if profile_image is not None:
+            user.profile_image = profile_image
 
         return await self._repo.update(user)

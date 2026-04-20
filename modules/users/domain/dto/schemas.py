@@ -12,11 +12,12 @@ class CreateUserRequest(BaseModel):
 
 
 class UpdateUserRequest(BaseModel):
-    name:      str | None = None
-    last_name: str | None = None
-    email:     EmailStr | None = None
-    password:  str | None = None
-    role:      str | None = None
+    name:          str | None = None
+    last_name:     str | None = None
+    email:         EmailStr | None = None
+    password:      str | None = None
+    role:          str | None = None
+    profile_image: str | None = None
 
 
 class ActivateCircuitRequest(BaseModel):
@@ -30,12 +31,13 @@ class ActivateCircuitResponse(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id:         int
-    name:       str
-    last_name:  str
-    email:      str
-    role_id:    int
-    role_name:  str | None
-    circuit_id: int | None
-    created_by: int | None
-    created_at: datetime | None
+    id:            int
+    name:          str
+    last_name:     str
+    email:         str
+    role_id:       int
+    role_name:     str | None
+    circuit_id:    int | None
+    created_by:    int | None
+    created_at:    datetime | None
+    profile_image: str | None = None

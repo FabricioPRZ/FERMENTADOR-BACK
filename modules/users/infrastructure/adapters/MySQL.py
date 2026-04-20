@@ -81,6 +81,7 @@ class UserRepository(IUserRepository):
                     email=user.email,
                     password=user.password,
                     role_id=user.role_id,
+                    profile_image=user.profile_image,
                 )
             )
             await session.commit()
@@ -115,4 +116,5 @@ class UserRepository(IUserRepository):
             role_name=model.role.name if model.role else None,
             created_by=model.created_by,
             created_at=model.created_at,
+            profile_image=model.profile_image,
         )

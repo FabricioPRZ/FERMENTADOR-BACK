@@ -30,15 +30,16 @@ CREATE TABLE circuits (
 );
 
 CREATE TABLE users (
-    id          INT AUTO_INCREMENT PRIMARY KEY,
-    name        VARCHAR(100)    NOT NULL,
-    last_name   VARCHAR(100)    NOT NULL,
-    password    VARCHAR(255)    NOT NULL,
-    email       VARCHAR(150)    NOT NULL UNIQUE,
-    role_id     INT             NOT NULL DEFAULT 3,
-    circuit_id  INT             DEFAULT NULL,
-    created_by  INT             DEFAULT NULL,
-    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    name          VARCHAR(100)  NOT NULL,
+    last_name     VARCHAR(100)  NOT NULL,
+    password      VARCHAR(255)  NOT NULL,
+    email         VARCHAR(150)  NOT NULL UNIQUE,
+    role_id       INT           NOT NULL DEFAULT 3,
+    profile_image LONGTEXT      NULL DEFAULT NULL,
+    circuit_id    INT           DEFAULT NULL,
+    created_by    INT           DEFAULT NULL,
+    created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_role    FOREIGN KEY (role_id)    REFERENCES roles(id)    ON DELETE RESTRICT,
     CONSTRAINT fk_user_circuit FOREIGN KEY (circuit_id) REFERENCES circuits(id) ON DELETE SET NULL,
     CONSTRAINT fk_user_creator FOREIGN KEY (created_by) REFERENCES users(id)   ON DELETE SET NULL

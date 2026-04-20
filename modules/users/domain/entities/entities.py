@@ -10,7 +10,8 @@ class User:
     email:      str
     password:   str
     role_id:    int
-    circuit_id: int | None = None
-    role_name:  str | None = None
-    created_by: int | None = None
-    created_at: datetime | None = None
+    circuit_id:    int | None = None
+    role_name:     str | None = None
+    created_by:    int | None = None
+    created_at:    datetime | None = None
+    profile_image: str | None = None

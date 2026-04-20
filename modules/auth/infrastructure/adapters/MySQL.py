@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, text
 from sqlalchemy.orm import relationship, selectinload
 from sqlalchemy import select
 from core.database import Base
@@ -26,8 +26,9 @@ class UserModel(Base):
     password   = Column(String(255), nullable=False)
     email      = Column(String(150), nullable=False, unique=True)
     role_id    = Column(Integer, ForeignKey("roles.id"), nullable=False, default=3)
-    circuit_id = Column(Integer, ForeignKey("circuits.id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    circuit_id    = Column(Integer, ForeignKey("circuits.id"), nullable=True)
+    created_by    = Column(Integer, ForeignKey("users.id"), nullable=True)
+    profile_image = Column(Text, nullable=True)
     created_at = Column(
         DateTime,
         server_default=text("CURRENT_TIMESTAMP"),
@@ -112,4 +113,5 @@ class AuthRepository(IAuthRepository):
             circuit_id=model.circuit_id,
             role=role,
             created_by=model.created_by,
+            profile_image=model.profile_image,
         )
