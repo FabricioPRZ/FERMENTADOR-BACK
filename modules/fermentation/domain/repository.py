@@ -19,6 +19,12 @@ class IFermentationRepository(ABC):
         scheduled_end:   datetime,
     ) -> FermentationSession:
         ...
+        
+    @abstractmethod
+    async def get_sessions_by_user(
+        self, user_id: int
+    ) -> list[FermentationSession]:
+        ...
 
     @abstractmethod
     async def get_session_by_id(

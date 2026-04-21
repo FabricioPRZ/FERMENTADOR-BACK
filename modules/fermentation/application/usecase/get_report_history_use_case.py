@@ -9,3 +9,4 @@ class GetReportHistoryUseCase:
 
     async def execute(self, user_id: int) -> list[ReportHistory]:
         return await self._repo.get_report_history_by_user(user_id)
+    

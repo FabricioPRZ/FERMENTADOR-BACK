@@ -11,7 +11,6 @@ from core.dependencies import require_admin_or_profesor, require_any_role
 
 router = APIRouter()
 
-
 @router.post(
     "/schedule",
     response_model=FermentationSessionResponse,
@@ -23,6 +22,41 @@ async def schedule_fermentation(
     current_user: dict = Depends(require_admin_or_profesor),
 ):
     return await fermentation_controller.schedule(body, current_user["user_id"])
+
+
+@router.get(
+    "/active",
+    response_model=FermentationSessionResponse | None,
+    summary="Sesión activa del circuito del usuario",
+)
+async def get_active_session(
+    current_user: dict = Depends(require_any_role),
+):
+    return await fermentation_controller.get_active(
+        current_user.get("circuit_id"),
+        current_user.get("user_id"),
+    )
+
+
+@router.get(
+    "/sessions",
+    response_model=list[FermentationSessionResponse],
+    summary="Historial de sesiones del usuario",
+)
+async def get_sessions_history(
+    current_user: dict = Depends(require_any_role),
+):
+    return await fermentation_controller.get_sessions_history(current_user["user_id"])
+
+@router.get(
+    "/history",
+    response_model=list[ReportHistoryResponse],
+    summary="Historial de reportes del usuario",
+)
+async def get_report_history(
+    current_user: dict = Depends(require_any_role),
+):
+    return await fermentation_controller.get_report_history(current_user["user_id"])
 
 
 @router.post(
@@ -53,34 +87,10 @@ async def stop_fermentation(
 @router.get(
     "/{session_id}/report",
     response_model=FermentationReportResponse,
-    summary="Obtener reporte",
+    summary="Obtener reporte de una sesión",
 )
 async def get_report(
     session_id: int,
     current_user: dict = Depends(require_any_role),
 ):
     return await fermentation_controller.get_report(session_id, current_user["user_id"])
-
-
-@router.get(
-    "/history",
-    response_model=list[ReportHistoryResponse],
-    summary="Historial de reportes del usuario",
-)
-async def get_report_history(
-    current_user: dict = Depends(require_any_role),
-):
-    return await fermentation_controller.get_report_history(current_user["user_id"])
-
-@router.get(
-    "/active",
-    response_model=FermentationSessionResponse | None,
-    summary="Sesion activa del circuito del usuario",
-)
-async def get_active_session(
-    current_user: dict = Depends(require_any_role),
-):
-    return await fermentation_controller.get_active(
-        current_user.get("circuit_id"),
-        current_user.get("user_id"),
-    )

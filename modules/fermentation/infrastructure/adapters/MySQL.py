@@ -181,6 +181,18 @@ class FermentationRepository(IFermentationRepository):
             model = result.scalar_one_or_none()
             return self._session_to_entity(model) if model else None
 
+    async def get_sessions_by_user(self, user_id: int) -> list[FermentationSession]:
+        async with self._session_factory() as session:
+            result = await session.execute(
+                select(FermentationSessionModel)
+                .where(FermentationSessionModel.user_id == user_id)
+                .order_by(FermentationSessionModel.id.desc())
+            )
+        return [
+            self._session_to_entity(m)
+            for m in result.scalars().all()
+        ]
+
     async def get_active_session_by_circuit(self, circuit_id: int) -> FermentationSession | None:
         async with self._session_factory() as session:
             result = await session.execute(
@@ -435,4 +447,3 @@ class FermentationRepository(IFermentationRepository):
             )
             model = result.scalar_one_or_none()
             return self._session_to_entity(model) if model else None
-
