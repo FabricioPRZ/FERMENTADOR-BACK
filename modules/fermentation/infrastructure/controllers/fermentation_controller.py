@@ -3,6 +3,7 @@ from modules.fermentation.application.usecase.start_fermentation_use_case import
 from modules.fermentation.application.usecase.stop_fermentation_use_case import StopFermentationUseCase
 from modules.fermentation.application.usecase.get_report_use_case import GetReportUseCase
 from modules.fermentation.application.usecase.get_report_history_use_case import GetReportHistoryUseCase
+from modules.fermentation.application.usecase.get_active_fermentation_use_case import GetActiveFermentationUseCase
 from modules.fermentation.infrastructure.adapters.MySQL import FermentationRepository
 from modules.sensors.infrastructure.adapters.MySQL import SensorRepository
 from modules.circuits.infrastructure.adapters.MySQL import CircuitRepository
@@ -20,8 +21,10 @@ from core.exceptions import FermentationSessionNotFoundException
 def _repo():
     return FermentationRepository(AsyncSessionLocal)
 
+
 def _sensor_repo():
     return SensorRepository(AsyncSessionLocal)
+
 
 def _circuit_repo():
     return CircuitRepository(AsyncSessionLocal)
@@ -96,3 +99,29 @@ async def get_report(session_id: int, user_id: int) -> FermentationReportRespons
 
 async def get_report_history(user_id: int) -> list[ReportHistoryResponse]:
     return await GetReportHistoryUseCase(_repo()).execute(user_id)
+
+
+async def get_active(circuit_id, user_id=None):
+    import traceback
+    try:
+        if not circuit_id and user_id is not None:
+            try:
+                from modules.auth.infrastructure.adapters.MySQL import AuthRepository
+                auth_repo = AuthRepository(AsyncSessionLocal)
+                user = await auth_repo.get_user_by_id(user_id)
+                circuit_id = getattr(user, "circuit_id", None) if user else None
+            except Exception as e:
+                print(f"[get_active] fallback lookup failed: {e}", flush=True)
+                circuit_id = None
+        print(f"[get_active] resolved circuit_id={circuit_id} user_id={user_id}", flush=True)
+        session = await GetActiveFermentationUseCase(_repo()).execute(circuit_id)
+        print(f"[get_active] session={session}", flush=True)
+        if not session:
+            return None
+        resp = _session_to_response(session)
+        print(f"[get_active] resp built ok: id={resp.id} status={resp.status}", flush=True)
+        return resp
+    except Exception as e:
+        print("[get_active] EXCEPTION:", repr(e), flush=True)
+        traceback.print_exc()
+        raise

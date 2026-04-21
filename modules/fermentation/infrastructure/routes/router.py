@@ -71,3 +71,16 @@ async def get_report_history(
     current_user: dict = Depends(require_any_role),
 ):
     return await fermentation_controller.get_report_history(current_user["user_id"])
+
+@router.get(
+    "/active",
+    response_model=FermentationSessionResponse | None,
+    summary="Sesion activa del circuito del usuario",
+)
+async def get_active_session(
+    current_user: dict = Depends(require_any_role),
+):
+    return await fermentation_controller.get_active(
+        current_user.get("circuit_id"),
+        current_user.get("user_id"),
+    )

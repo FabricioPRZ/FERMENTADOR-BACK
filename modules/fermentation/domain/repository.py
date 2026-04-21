@@ -115,3 +115,7 @@ class IFermentationRepository(ABC):
     @abstractmethod
     async def get_active_formula_factor(self) -> float:
         ...
+
+    @abstractmethod
+    async def get_active_by_user(self, user_id: int): 
+        ...

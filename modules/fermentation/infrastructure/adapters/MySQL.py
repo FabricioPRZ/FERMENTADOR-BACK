@@ -28,31 +28,33 @@ SENSOR_REPORT_MAP = {
 
 # ── Modelos ORM ───────────────────────────────────────────────────────────────
 class FermentationSessionModel(Base):
-    __tablename__  = "fermentation_sessions"
+    __tablename__ = "fermentation_sessions"
     __table_args__ = {"extend_existing": True}
 
-    id              = Column(Integer, primary_key=True, autoincrement=True)
-    circuit_id      = Column(Integer, ForeignKey("circuits.id"), nullable=False)
-    user_id         = Column(Integer, ForeignKey("users.id"), nullable=False)
-    formula_id      = Column(Integer, ForeignKey("efficiency_formula.id"), nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    circuit_id = Column(Integer, ForeignKey("circuits.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    formula_id = Column(Integer, ForeignKey(
+        "efficiency_formula.id"), nullable=False)
     scheduled_start = Column(DateTime, nullable=False)
-    scheduled_end   = Column(DateTime, nullable=False)
-    actual_start    = Column(DateTime, nullable=True)
-    actual_end      = Column(DateTime, nullable=True)
-    status          = Column(
+    scheduled_end = Column(DateTime, nullable=False)
+    actual_start = Column(DateTime, nullable=True)
+    actual_end = Column(DateTime, nullable=True)
+    status = Column(
         Enum("scheduled", "running", "completed", "interrupted"),
         nullable=False,
         default="scheduled",
     )
-    interrupted_by  = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at      = Column(
+    interrupted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(
         DateTime,
         server_default=text("CURRENT_TIMESTAMP"),
         nullable=False,
     )
 
-    circuit = relationship("CircuitModel", back_populates="fermentation_sessions")
-    report  = relationship(
+    circuit = relationship(
+        "CircuitModel", back_populates="fermentation_sessions")
+    report = relationship(
         "FermentationReportModel",
         back_populates="session",
         uselist=False,
@@ -60,46 +62,47 @@ class FermentationSessionModel(Base):
 
 
 class FermentationReportModel(Base):
-    __tablename__  = "fermentation_reports"
+    __tablename__ = "fermentation_reports"
     __table_args__ = {"extend_existing": True}
 
-    id                          = Column(Integer, primary_key=True, autoincrement=True)
-    session_id                  = Column(Integer, ForeignKey("fermentation_sessions.id"), nullable=False, unique=True)
-    initial_sugar               = Column(Float, nullable=False)
-    final_sugar                 = Column(Float, nullable=True)
-    ethanol_detected            = Column(Float, nullable=True)
-    theoretical_ethanol         = Column(Float, nullable=True)
-    efficiency                  = Column(Float, nullable=True)
-    alcohol_initial             = Column(Float, nullable=True)
-    alcohol_final               = Column(Float, nullable=True)
-    alcohol_deactivated_at      = Column(DateTime, nullable=True)
-    alcohol_last_reading        = Column(Float, nullable=True)
-    density_initial             = Column(Float, nullable=True)
-    density_final               = Column(Float, nullable=True)
-    density_deactivated_at      = Column(DateTime, nullable=True)
-    density_last_reading        = Column(Float, nullable=True)
-    conductivity_initial        = Column(Float, nullable=True)
-    conductivity_final          = Column(Float, nullable=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(Integer, ForeignKey(
+        "fermentation_sessions.id"), nullable=False, unique=True)
+    initial_sugar = Column(Float, nullable=False)
+    final_sugar = Column(Float, nullable=True)
+    ethanol_detected = Column(Float, nullable=True)
+    theoretical_ethanol = Column(Float, nullable=True)
+    efficiency = Column(Float, nullable=True)
+    alcohol_initial = Column(Float, nullable=True)
+    alcohol_final = Column(Float, nullable=True)
+    alcohol_deactivated_at = Column(DateTime, nullable=True)
+    alcohol_last_reading = Column(Float, nullable=True)
+    density_initial = Column(Float, nullable=True)
+    density_final = Column(Float, nullable=True)
+    density_deactivated_at = Column(DateTime, nullable=True)
+    density_last_reading = Column(Float, nullable=True)
+    conductivity_initial = Column(Float, nullable=True)
+    conductivity_final = Column(Float, nullable=True)
     conductivity_deactivated_at = Column(DateTime, nullable=True)
-    conductivity_last_reading   = Column(Float, nullable=True)
-    ph_initial                  = Column(Float, nullable=True)
-    ph_final                    = Column(Float, nullable=True)
-    ph_deactivated_at           = Column(DateTime, nullable=True)
-    ph_last_reading             = Column(Float, nullable=True)
-    temperature_initial         = Column(Float, nullable=True)
-    temperature_final           = Column(Float, nullable=True)
-    temperature_deactivated_at  = Column(DateTime, nullable=True)
-    temperature_last_reading    = Column(Float, nullable=True)
-    turbidity_initial           = Column(Float, nullable=True)
-    turbidity_final             = Column(Float, nullable=True)
-    turbidity_deactivated_at    = Column(DateTime, nullable=True)
-    turbidity_last_reading      = Column(Float, nullable=True)
-    rpm_initial                 = Column(Float, nullable=True)
-    rpm_final                   = Column(Float, nullable=True)
-    rpm_deactivated_at          = Column(DateTime, nullable=True)
-    rpm_last_reading            = Column(Float, nullable=True)
-    notes                       = Column(Text, nullable=True)
-    generated_at                = Column(
+    conductivity_last_reading = Column(Float, nullable=True)
+    ph_initial = Column(Float, nullable=True)
+    ph_final = Column(Float, nullable=True)
+    ph_deactivated_at = Column(DateTime, nullable=True)
+    ph_last_reading = Column(Float, nullable=True)
+    temperature_initial = Column(Float, nullable=True)
+    temperature_final = Column(Float, nullable=True)
+    temperature_deactivated_at = Column(DateTime, nullable=True)
+    temperature_last_reading = Column(Float, nullable=True)
+    turbidity_initial = Column(Float, nullable=True)
+    turbidity_final = Column(Float, nullable=True)
+    turbidity_deactivated_at = Column(DateTime, nullable=True)
+    turbidity_last_reading = Column(Float, nullable=True)
+    rpm_initial = Column(Float, nullable=True)
+    rpm_final = Column(Float, nullable=True)
+    rpm_deactivated_at = Column(DateTime, nullable=True)
+    rpm_last_reading = Column(Float, nullable=True)
+    notes = Column(Text, nullable=True)
+    generated_at = Column(
         DateTime,
         server_default=text("CURRENT_TIMESTAMP"),
         nullable=False,
@@ -110,13 +113,14 @@ class FermentationReportModel(Base):
 
 
 class ReportHistoryModel(Base):
-    __tablename__  = "report_history"
+    __tablename__ = "report_history"
     __table_args__ = {"extend_existing": True}
 
-    id          = Column(Integer, primary_key=True, autoincrement=True)
-    report_id   = Column(Integer, ForeignKey("fermentation_reports.id"), nullable=False)
-    user_id     = Column(Integer, ForeignKey("users.id"), nullable=False)
-    action      = Column(
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    report_id = Column(Integer, ForeignKey(
+        "fermentation_reports.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(
         Enum("generated", "downloaded", "viewed"),
         nullable=False,
         default="generated",
@@ -131,13 +135,13 @@ class ReportHistoryModel(Base):
 
 
 class EfficiencyFormulaModel(Base):
-    __tablename__  = "efficiency_formula"
+    __tablename__ = "efficiency_formula"
     __table_args__ = {"extend_existing": True}
 
-    id                = Column(Integer, primary_key=True, autoincrement=True)
-    name              = Column(String(100), nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
     conversion_factor = Column(Float, nullable=False, default=0.51)
-    is_active         = Column(Integer, nullable=False, default=1)
+    is_active = Column(Integer, nullable=False, default=1)
 
 
 # ── Repositorio ───────────────────────────────────────────────────────────────
@@ -198,9 +202,12 @@ class FermentationRepository(IFermentationRepository):
         interrupted_by: int | None = None,
     ) -> FermentationSession:
         values = {"status": status}
-        if actual_start:   values["actual_start"]   = actual_start
-        if actual_end:     values["actual_end"]     = actual_end
-        if interrupted_by: values["interrupted_by"] = interrupted_by
+        if actual_start:
+            values["actual_start"] = actual_start
+        if actual_end:
+            values["actual_end"] = actual_end
+        if interrupted_by:
+            values["interrupted_by"] = interrupted_by
 
         async with self._session_factory() as session:
             await session.execute(
@@ -342,7 +349,8 @@ class FermentationRepository(IFermentationRepository):
             result = await session.execute(
                 select(UserModel.id)
                 .where(UserModel.circuit_id == circuit_id)
-                .order_by(UserModel.role_id.asc())  # role_id 1=admin tiene prioridad
+                # role_id 1=admin tiene prioridad
+                .order_by(UserModel.role_id.asc())
                 .limit(1)
             )
             return result.scalar_one_or_none()
@@ -413,3 +421,18 @@ class FermentationRepository(IFermentationRepository):
             notes=model.notes,
             generated_at=model.generated_at,
         )
+
+    async def get_active_by_user(self, user_id: int):
+        async with self._session_factory() as session:
+            result = await session.execute(
+                select(FermentationSessionModel)
+                .where(
+                    FermentationSessionModel.user_id == user_id,
+                    FermentationSessionModel.status == 'running',
+                )
+                .order_by(FermentationSessionModel.id.desc())
+                .limit(1)
+            )
+            model = result.scalar_one_or_none()
+            return self._session_to_entity(model) if model else None
+
