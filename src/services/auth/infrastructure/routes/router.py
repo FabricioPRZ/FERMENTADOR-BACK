@@ -1,0 +1,29 @@
+from fastapi import APIRouter
+from src.services.auth.domain.dto.login_schema import LoginRequest, TokenResponse
+from src.services.auth.domain.dto.register_schema import RegisterRequest, RegisterResponse
+from src.services.auth.domain.dto.refresh_token_schema import RefreshTokenRequest, AccessTokenResponse
+from src.services.auth.infrastructure.controllers.login_controller import login
+from src.services.auth.infrastructure.controllers.register_controller import register
+from src.services.auth.infrastructure.controllers.refresh_token_controller import refresh_token
+
+router = APIRouter()
+
+
+@router.post(
+    "/register",
+    response_model=RegisterResponse,
+    status_code=201,
+    summary="Registrar nuevo administrador",
+)
+async def register_route(body: RegisterRequest):
+    return await register(body)
+
+
+@router.post("/login", response_model=TokenResponse, summary="Iniciar sesión")
+async def login_route(body: LoginRequest):
+    return await login(body)
+
+
+@router.post("/refresh", response_model=AccessTokenResponse, summary="Refrescar access token")
+async def refresh_route(body: RefreshTokenRequest):
+    return await refresh_token(body)
