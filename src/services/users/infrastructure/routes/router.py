@@ -1,0 +1,58 @@
+from fastapi import APIRouter, Depends
+from src.services.users.domain.dto.user_schema import UserResponse
+from src.services.users.domain.dto.create_user_schema import CreateUserRequest
+from src.services.users.domain.dto.update_user_schema import UpdateUserRequest
+from src.services.users.domain.dto.activate_circuit_schema import ActivateCircuitRequest, ActivateCircuitResponse
+from src.services.users.infrastructure.controllers.get_all_users_controller import get_all
+from src.services.users.infrastructure.controllers.get_user_by_id_controller import get_by_id
+from src.services.users.infrastructure.controllers.create_user_controller import create
+from src.services.users.infrastructure.controllers.update_user_controller import update
+from src.services.users.infrastructure.controllers.delete_user_controller import delete
+from src.services.users.infrastructure.controllers.activate_circuit_controller import activate_my_circuit
+from src.core.dependencies import require_admin, require_admin_or_profesor, require_any_role
+
+router = APIRouter()
+
+
+@router.post(
+    "/me/activate",
+    response_model=ActivateCircuitResponse,
+    summary="Activar mi circuito con código de activación",
+)
+async def activate_my_circuit_route(
+    body: ActivateCircuitRequest,
+    current_user: dict = Depends(require_any_role),
+):
+    return await activate_my_circuit(user_id=current_user["user_id"], body=body)
+
+
+@router.get("/", response_model=list[UserResponse], summary="Ver usuarios que yo creé")
+async def get_all_users(current_user: dict = Depends(require_admin_or_profesor)):
+    return await get_all(
+        requester_id=current_user["user_id"],
+        requester_role=current_user["role"],
+    )
+
+
+@router.get("/{user_id}", response_model=UserResponse, summary="Obtener usuario por ID")
+async def get_user(user_id: int, current_user: dict = Depends(require_admin_or_profesor)):
+    return await get_by_id(user_id)
+
+
+@router.post("/", response_model=UserResponse, status_code=201, summary="Crear usuario (admin o profesor)")
+async def create_user(body: CreateUserRequest, current_user: dict = Depends(require_admin_or_profesor)):
+    return await create(
+        body=body,
+        created_by=current_user["user_id"],
+        creator_role=current_user["role"],
+    )
+
+
+@router.put("/{user_id}", response_model=UserResponse, summary="Actualizar usuario (solo admin)")
+async def update_user(user_id: int, body: UpdateUserRequest, current_user: dict = Depends(require_admin)):
+    return await update(user_id, body)
+
+
+@router.delete("/{user_id}", status_code=204, summary="Eliminar usuario (solo admin)")
+async def delete_user(user_id: int, current_user: dict = Depends(require_admin)):
+    await delete(user_id)

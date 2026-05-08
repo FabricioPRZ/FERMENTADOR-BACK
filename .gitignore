@@ -1,4 +1,3 @@
-# ── Entorno virtual ───────────────────────────────────────────────────────────
 .venv/
 venv/
 env/
@@ -7,7 +6,6 @@ ENV/
 .env.*
 !.env.example
 
-# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -28,7 +26,6 @@ share/python-wheels/
 .installed.cfg
 MANIFEST
 
-# ── Pytest / cobertura ────────────────────────────────────────────────────────
 .pytest_cache/
 .coverage
 .coverage.*
@@ -38,14 +35,12 @@ nosetests.xml
 test-results/
 *.log
 
-# ── Mypy / linters ────────────────────────────────────────────────────────────
 .mypy_cache/
 .dmypy.json
 dmypy.json
 .ruff_cache/
 .pylint.d/
 
-# ── IDEs ──────────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
@@ -54,24 +49,21 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
-# ── Docker ────────────────────────────────────────────────────────────────────
 docker-compose.override.yml
 
-# ── Base de datos local ───────────────────────────────────────────────────────
 *.sqlite3
 *.db
 
-# ── Alembic ───────────────────────────────────────────────────────────────────
 alembic/versions/*.pyc
 
-# ── Logs ──────────────────────────────────────────────────────────────────────
 logs/
 *.log
 
-# ── Archivos de sistema ───────────────────────────────────────────────────────
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
+
+.claude

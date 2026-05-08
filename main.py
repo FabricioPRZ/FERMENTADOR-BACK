@@ -16,26 +16,26 @@ async def lifespan(app: FastAPI):
     logger.info("Iniciando aplicación...")
 
     # 1. Base de datos (siempre requerida)
-    from core.database import init_db
+    from src.core.database import init_db
     await init_db()
     logger.info("Base de datos inicializada")
 
     # 2. RabbitMQ (opcional hasta tener EC2)
     rabbitmq_available = False
     try:
-        from core.rabbitmq.connection import rabbitmq
+        from src.core.rabbitmq.connection import rabbitmq
         await rabbitmq.connect()
 
-        from core.rabbitmq.exchanges import exchange_manager
+        from src.core.rabbitmq.exchanges import exchange_manager
         await exchange_manager.setup()
 
-        from core.rabbitmq.consumer import consumer
-        from modules.sensors.application.usecase.save_reading_use_case import SaveReadingUseCase
-        from modules.sensors.infrastructure.adapters.MySQL import SensorRepository
-        from modules.notifications.application.usecase.send_notification_use_case import SendNotificationUseCase
-        from modules.notifications.infrastructure.adapters.MySQL import NotificationRepository
-        from modules.fermentation.infrastructure.adapters.MySQL import FermentationRepository
-        from core.database import AsyncSessionLocal
+        from src.core.rabbitmq.consumer import consumer
+        from src.services.sensors.application.usecase.save_reading_use_case import SaveReadingUseCase
+        from src.services.sensors.infrastructure.adapters.MySQL import SensorRepository
+        from src.services.notifications.application.usecase.send_notification_use_case import SendNotificationUseCase
+        from src.services.notifications.infrastructure.adapters.MySQL import NotificationRepository
+        from src.services.fermentation.infrastructure.adapters.MySQL import FermentationRepository
+        from src.core.database import AsyncSessionLocal
 
         consumer.set_dependencies(
             save_reading_use_case=SaveReadingUseCase(
@@ -47,8 +47,8 @@ async def lifespan(app: FastAPI):
             fermentation_repository=FermentationRepository(AsyncSessionLocal),
         )
 
-        from core.threads.sensor_thread_manager import thread_manager
-        from modules.sensors.infrastructure.adapters.sensor_thread import SensorThread
+        from src.core.threads.sensor_thread_manager import thread_manager
+        from src.services.sensors.infrastructure.adapters.sensor_thread import SensorThread
         thread_manager.set_thread_class(SensorThread)
 
         await consumer.start()
@@ -70,9 +70,9 @@ async def lifespan(app: FastAPI):
     logger.info("Cerrando aplicación...")
 
     if rabbitmq_available:
-        from core.rabbitmq.consumer import consumer
-        from core.rabbitmq.connection import rabbitmq
-        from core.threads.sensor_thread_manager import thread_manager
+        from src.core.rabbitmq.consumer import consumer
+        from src.core.rabbitmq.connection import rabbitmq
+        from src.core.threads.sensor_thread_manager import thread_manager
 
         await consumer.stop()
         thread_manager.stop_all()
@@ -99,16 +99,16 @@ app.add_middleware(
 )
 
 # ── Routers ───────────────────────────────────────────────────────────────────
-from modules.auth.infrastructure.routes.router             import router as auth_router
-from modules.users.infrastructure.routes.router            import router as users_router
-from modules.circuits.infrastructure.routes.router         import router as circuits_router
-from modules.circuits.infrastructure.routes.websocket      import router as circuits_ws_router
-from modules.sensors.infrastructure.routes.router          import router as sensors_router
-from modules.sensors.infrastructure.routes.websocket       import router as sensors_ws_router
-from modules.fermentation.infrastructure.routes.router     import router as fermentation_router
-from modules.notifications.infrastructure.routes.router    import router as notifications_router
-from modules.notifications.infrastructure.routes.websocket import router as notifications_ws_router
-from modules.formula.infrastructure.routes.router          import router as formula_router
+from src.services.auth.infrastructure.routes.router             import router as auth_router
+from src.services.users.infrastructure.routes.router            import router as users_router
+from src.services.circuits.infrastructure.routes.router         import router as circuits_router
+from src.services.circuits.infrastructure.routes.websocket      import router as circuits_ws_router
+from src.services.sensors.infrastructure.routes.router          import router as sensors_router
+from src.services.sensors.infrastructure.routes.websocket       import router as sensors_ws_router
+from src.services.fermentation.infrastructure.routes.router     import router as fermentation_router
+from src.services.notifications.infrastructure.routes.router    import router as notifications_router
+from src.services.notifications.infrastructure.routes.websocket import router as notifications_ws_router
+from src.services.formula.infrastructure.routes.router          import router as formula_router
 
 app.include_router(auth_router,             prefix="/api/auth",          tags=["Auth"])
 app.include_router(users_router,            prefix="/api/users",         tags=["Users"])
@@ -125,7 +125,7 @@ app.include_router(formula_router,          prefix="/api/formula",       tags=["
 # ── Health ────────────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 async def health():
-    from core.rabbitmq.connection import rabbitmq
+    from src.core.rabbitmq.connection import rabbitmq
     rabbit_status = "connected"
     try:
         if rabbitmq._connection is None or rabbitmq._connection.is_closed:
