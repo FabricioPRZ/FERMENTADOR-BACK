@@ -1,3 +1,5 @@
+import base64
+import json
 import urllib.parse
 
 from fastapi.responses import RedirectResponse
@@ -24,8 +26,10 @@ async def google_redirect():
 async def google_callback(code: str):
     repo   = AuthRepository(AsyncSessionLocal)
     result = await GoogleWebAuthUseCase(repo, OAuthAdapter()).execute(code)
+    user_b64 = base64.urlsafe_b64encode(json.dumps(result["user"]).encode()).decode()
     params = urllib.parse.urlencode({
         "access_token":  result["access_token"],
         "refresh_token": result["refresh_token"],
+        "user_data":     user_b64,
     })
     return RedirectResponse(f"{settings.FRONTEND_URL}/auth/callback?{params}")
