@@ -194,3 +194,10 @@ class BadRequestException(AppException):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=detail
         )
+
+class InvalidFileException(AppException):
+    def __init__(self, detail: str = "Archivo inválido"):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=detail
+        )
