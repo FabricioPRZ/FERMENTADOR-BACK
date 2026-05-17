@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 
 from src.core.dependencies import require_admin, require_admin_or_profesor, require_any_role
 from src.services.users.domain.dto.activate_circuit_schema import (
@@ -16,8 +16,22 @@ from src.services.users.infrastructure.controllers.delete_user_controller import
 from src.services.users.infrastructure.controllers.get_all_users_controller import get_all
 from src.services.users.infrastructure.controllers.get_user_by_id_controller import get_by_id
 from src.services.users.infrastructure.controllers.update_user_controller import update
+from src.services.users.infrastructure.controllers.upload_profile_image_controller import (
+    upload_profile_image_controller,
+)
 
 router = APIRouter()
+
+
+@router.post(
+    "/me/profile-image",
+    summary="Subir imagen de perfil a Cloudinary",
+)
+async def upload_profile_image_route(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_any_role),
+):
+    return await upload_profile_image_controller(file, user_id=current_user["user_id"])
 
 
 @router.post(
