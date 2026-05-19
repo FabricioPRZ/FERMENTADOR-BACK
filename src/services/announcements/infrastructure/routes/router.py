@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from src.core.dependencies import require_soporte, require_any_role
+from src.core.dependencies import require_any_role, require_soporte
 from src.services.announcements.domain.dto.announcement_schema import (
     AnnouncementResponse,
     CreateAnnouncementRequest,

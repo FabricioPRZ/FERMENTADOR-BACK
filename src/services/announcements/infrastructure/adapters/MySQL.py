@@ -17,9 +17,9 @@ class AnnouncementRepository(IAnnouncementRepository):
             now = datetime.utcnow()
             pinned_first = case(
                 (
-                    (AnnouncementModel.is_pinned == True) &
+                    AnnouncementModel.is_pinned &
                     (
-                        (AnnouncementModel.pinned_until == None) |
+                        AnnouncementModel.pinned_until.is_(None) |
                         (AnnouncementModel.pinned_until > now)
                     ),
                     0,
